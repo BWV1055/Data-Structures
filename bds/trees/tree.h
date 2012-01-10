@@ -66,29 +66,30 @@ struct generic_data tr_replace(struct tree *t, struct fpath path, struct generic
 struct generic_data tr_remove_path(struct tree *t, struct fpath path);
 /* Removes first occurence of data in a breath first traversal */
 char* tr_remove_data(struct tree *t, struct generic_data data);
+/* Takes a path and returns a cursor */
+tr_cursor tr_path_to_cur(struct tree *t, struct fpath path);
 /* Returns the root */
 tr_cursor tr_root(struct tree *t);
 /* Returns a list of the children of the selected node */
 tr_cursor* tr_children(tr_cursor cur);
 /* Returns the parent */
 tr_cursor tr_parent(tr_cursor cur);
-/* Return 1 if node if leaf, 0 otherwise */
+/* Return 1 if node is external, 0 otherwise */
 uchar tr_leaf(struct tree *t, struct tr_node node);
 /* Returns an array with all siblings */
 struct generic_data* tr_siblings(struct tree *t, struct fpath path);
 
-/* Traverses the tree breath first and applies function f to every element 
- * f can do many more things if it works with the actual node, and not with the data in it */
-void tr_traverse_bf(struct tree *t, void (*f)(struct tr_node));
-/* Traverses the tree depth first and applies function f to every element */
-void tr_traverse_df(struct tree *t, void (*f)(struct tr_node));
+/* Traversing is done in linear time,
+ * f can do more things if it works with the actual node */
+void tr_traverse_pre(struct tree *t, void (*f)(struct tr_node));
+void tr_traverse_post(struct tree *t, void (*f)(struct tr_node));
+/* Visits all the nodes at level l, then continues with nodes at level l+1 */
+void tr_traverse_level(struct tree *t, void (*f)(struct tr_node));
 
-/* Returns the height of a sub-tree in O(n) */
+/* Returns the height of a node in O(n) */
 uint tr_height(struct tree *t, tr_cursor cur);
-/* Returns the depth of a sub-tree */
+/* Returns the depth of a node in O(n) */
 uint tr_depth(struct tree *t, tr_cursor cur);
-/* Takes a path and returns a cursor */
-tr_cursor tr_path_to_cur(struct tree *t, struct fpath path);
 /* Removes a subtree pointed by cur, returns the parent of cur */
 tr_cursor tr_remove_subtr(struct tree *t, tr_cursor cur);
 /* Adds a subtree to_add on the next available position as a child of cur 
