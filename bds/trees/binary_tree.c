@@ -50,3 +50,12 @@ void bt_trav_post_order(struct bt_node *n, void(*f)(struct generic_data))
 		bt_trav_in_order(n->r, f);
 	f(n->d);
 }
+
+/* Useful node visiting functions */
+void n_chd(struct bt_node n) {
+	n.total_descendants = n_chd_r(n);
+}
+
+inline uint n_chd_r(struct bt_node n) {
+	return (n.left?1+n_chd_r(*n.left):0) + (n.right?1+n_chd_r(*n.right):0);
+}

@@ -1,35 +1,69 @@
 /*
  * Generic binary tree
- * Implements operations used by all binary trees
- * Because in a binary tree there is no one to one correspondence
- *   between a node and a value (multiple nodes can have the same
- *   value), data in the binary tree is identified using nodes
- *   (ie: methods work with bt_node structs, not with generic_data)
- * The tree is actually a reference to the root, there are no
- *   additional fields in the tree (no size or depth is stored)
- * This is a basic data type, so there are no type definitions
  * Deleting a node from a binary tree is ambiguous
  *   and is implemented by each type of binary tree separately
+ *
+ *
+ *
+ *
  */
+
+#ifndef _BINARY_TREE_H_
+#define _BINARY_TREE_H_
+
+#include "../../mds/mds_errors.h"
+#include "../../mds/mds_data_types.h"
 
 #define MAX(a,b)		0
 
 struct bt_node {
-	struct generic_data v;
-	struct bt_node *l;
-	struct bt_node *r;
+	struct generic_data data;
+	struct bt_node *parent;
+	struct bt_node *left;
+	struct bt_node *right;
 };
 
 struct bt {
-	struct bt_node *root;
+	uint size;
+	uint height;
+	bt_cursor root;
 };
-/* Initializes a binary tree */
+
+typedef struct bt_node* bt_cursor;
+
+/* Initializes an empty binary tree */
 struct bt* bt_init();	
-/* Inserts a value in a child node of v */
-void bt_insert(struct *t, struct bt_node *p, struct generic_data d);
-/* Traverses the tree in-order and applies f to every element */
-void bt_trav_in_order(struct bt_node *n, void(*f)(struct generic_data));
-/* Traverses the tree pre-order and applies f to every element */
-void bt_trav_pre_order(struct bt_node *n, void(*f)(struct generic_data));
-/* Traverses the tree post-order and applies f to every element */
-void bt_trav_post_order(struct bt_node *n, void(*f)(struct generic_data));
+/* Initializes a binary tree and puts data in root */
+struct bt* bt_init_value(struct generic_data data);
+/* Inserts a value in a child node of cur */
+void bt_insert(struct bt *t, bt_cursor cur, struct generic_data data);
+/* Returns the value of the left child of node n */
+struct generic_data bt_get_left(struct bt *t, struct bt_node n);
+/* Returns the value of the right child node n */
+struct generic_data bt_get_right(struct bt *t, struct bt_node n);
+/* Returns the value of the parent of node n */
+struct generic_data bt_get_parent(struct bt *t, struct bt_node n);
+/* Sets the value of the left child */
+void bt_set_left(struct bt *t, struct bt_node n);
+/* Sets the value of the right child */
+void bt_set_right(struct bt *t, struct bt_node n);
+/* Sets the value of the parent */
+void bt_set_parent(struct bt *t, struct bt_node n);
+
+/* Traverses the tree in order and applies f to every element */
+void bt_traversal_in(struct bt *t, void(*f)(struct bt_node));
+/* Traverses the tree pre order and applies f to every element */
+void bt_traversal_pre(struct bt *t, void(*f)(struct bt_node));
+/* Traverses the tree post order and applies f to every element */
+void bt_traversal_post(struct bt *t, void(*f)(struct bt_node));
+
+/* These are traversal methods which work with cursors, not with the whole tree,
+ * f has same meaning as above */
+/* Traverses the subtree rooted at node n in order */
+void bt_subtr_trav_in(bt_cursor cur, void(*f)(struct bt_node));
+/* Traverses the tree pre order and applies f to every element */
+void bt_subtr_trav_pre(bt_cursor cur, void(*f)(struct bt_node));
+/* Traverses the tree post order and applies f to every element */
+void bt_subtr_trav_post(bt_cursor cur, void(*f)(struct bt_node));
+
+#endif
