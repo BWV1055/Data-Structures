@@ -15,7 +15,7 @@
  *
  * Note on tr_cursor:
  * 	tr_cursor is used ONLY when there is no other option left (for example, when a method
- * 	has to return NULL), otherwise, passing a tr_node (and possibly the actual tree) is 
+ * 	has to return NULL), otherwise, passing a tr_node (or path) (and possibly the actual tree) is 
  * 	the preferred way of defining a function.
  *
  */
@@ -62,10 +62,13 @@ uchar tr_isEmpty(struct tree *t);
 struct tree* tr_init();
 /* Initialize tree with a value */
 struct tree* tr_init_data(struct generic_data data);
+/* Returns all the entries in the tree, use tr_size()
+ * for the number of elements */
+struct generic_data* tr_entries(struct tree *t);
 /* Adds a new element in the tree at the position specified by path 
  * If there is already an element at this position, the function returns */
 void tr_insert(struct tree *t, struct generic_data data, struct fpath path);
-/* Replaces the element present at path and returns it */
+/* Replaces the data present at path with replace and returns the old value */
 struct generic_data tr_replace(struct tree *t, struct fpath path, struct generic_data replace);
 /* Removes the element found at the fpath path, if the path exists 
  * and returns it */
@@ -74,6 +77,8 @@ struct generic_data tr_remove_path(struct tree *t, struct fpath path);
 char* tr_remove_data(struct tree *t, struct generic_data data);
 /* Takes a path and returns a cursor */
 tr_cursor tr_path_to_cur(struct tree *t, struct fpath path);
+/* Takes a cursor and returns a path */
+struct fpath* tr_path_to_cur(tr_cursor cur);
 /* Returns the root */
 tr_cursor tr_root(struct tree *t);
 /* Returns a list of the children of the selected node */
@@ -81,16 +86,16 @@ tr_cursor* tr_children(tr_cursor cur);
 /* Returns the parent */
 tr_cursor tr_parent(tr_cursor cur);
 /* Return 1 if node is external, 0 otherwise */
-uchar_t tr_leaf(struct tree *t, struct tr_node node);
-/* Returns an array with all siblings */
-struct generic_data* tr_siblings(struct tree *t, struct fpath path);
+uchar_t tr_leaf(struct tr_node node);
+/* Returns all the siblings of the node found at path, len is the number of siblings */
+void tr_siblings(struct tree *t, struct fpath path, struct generic_data *siblings, size_t *len);
 
 /* Traversing is done in linear time,
  * f can do more things if it works with the actual node */
-void tr_traverse_pre(struct tree *t, void (*f)(struct tr_node));
-void tr_traverse_post(struct tree *t, void (*f)(struct tr_node));
+void tr_trav_pre(struct tree *t, void (*f)(struct tr_node));
+void tr_trav_post(struct tree *t, void (*f)(struct tr_node));
 /* Visits all the nodes at level l, then continues with nodes at level l+1 */
-void tr_traverse_level(struct tree *t, void (*f)(struct tr_node));
+void tr_trav_level(struct tree *t, void (*f)(struct tr_node));
 
 /* Traversing is done on a subtree rooted at cur */
 void tr_subtr_trav_pre(tr_cursor cur, void (*f)(struct tr_node));
