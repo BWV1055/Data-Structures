@@ -12,13 +12,19 @@
  * The update methods provided here are generic
  * For different types of trees/applications, additional update methods are available
  *
+ *
+ * Note on tr_cursor:
+ * 	tr_cursor is used ONLY when there is no other option left (for example, when a method
+ * 	has to return NULL), otherwise, passing a tr_node (and possibly the actual tree) is 
+ * 	the preferred way of defining a function.
+ *
  */
 
 #ifndef _TREE_H_
-#define _TRRE_H_
+#define _TREE_H_
 
 #include <stdio.h>
-#include "../mds/mds_data_types.h"
+#include "../../mds/mds_data_types.h"
 
 #define TR_NODE_MAX_CHILDREN 		8
 #define TR_MAX_NODES		 		4096
@@ -75,7 +81,7 @@ tr_cursor* tr_children(tr_cursor cur);
 /* Returns the parent */
 tr_cursor tr_parent(tr_cursor cur);
 /* Return 1 if node is external, 0 otherwise */
-uchar tr_leaf(struct tree *t, struct tr_node node);
+uchar_t tr_leaf(struct tree *t, struct tr_node node);
 /* Returns an array with all siblings */
 struct generic_data* tr_siblings(struct tree *t, struct fpath path);
 
@@ -86,14 +92,19 @@ void tr_traverse_post(struct tree *t, void (*f)(struct tr_node));
 /* Visits all the nodes at level l, then continues with nodes at level l+1 */
 void tr_traverse_level(struct tree *t, void (*f)(struct tr_node));
 
-/* Returns the height of a node in O(n) */
-uint tr_height(struct tree *t, tr_cursor cur);
-/* Returns the depth of a node in O(n) */
-uint tr_depth(struct tree *t, tr_cursor cur);
-/* Removes a subtree pointed by cur, returns the parent of cur */
-tr_cursor tr_remove_subtr(struct tree *t, tr_cursor cur);
-/* Adds a subtree to_add on the next available position as a child of cur 
- * Returns NULL if the operation failed, or to_add on success */
-tr_cursor tr_add_subtr(struct tree *t, tr_cursor to_add, tr_cursor cur);
+/* Traversing is done on a subtree rooted at cur */
+void tr_subtr_trav_pre(tr_cursor cur, void (*f)(struct tr_node));
+void tr_subtr_trav_post(tr_cursor cur, void (*f)(struct tr_node));
+void tr_subtr_trav_level(tr_cursor cur, void (*f)(struct tr_node));
+
+/* Returns the height of node qNode in O(n) */
+uchar_t tr_height(struct tr_node qNode);
+/* Returns the depth of node qNode in O(n) */
+uchar_t tr_depth(struct tr_node qNode);
+/* Removes a subtree rooted at qNode, returns a cursor at the parent of qNode */
+tr_cursor tr_remove_subtr(struct tree *t, struct tr_node qNode);
+/* Adds a subtree subTree on the next available position as a child of qNode 
+ * Returns NULL if the operation failed, or a cursor to the newly create child of qNode */
+tr_cursor tr_add_subtr(struct tree *t, struct tr_node qNode, struct tr_node subTree);
 
 #endif
