@@ -101,9 +101,10 @@ sl_cursor sl_insertAbove(sl_cursor cur) {
 	tower_elem->next = cur->above;
 	return tower_elem;
 }
-/* Finds the position with the smallest key larger than the data key */
-sl_cursor sl_zigzag(sl_cursor cur, struct generic_data data) {
-	while(G_DATA_GREATER(cur.data, data)) {
+/* Finds the position with the smallest key larger than qKey */
+sl_cursor sl_zigzag(struct sl *l, key_t qKey) {
+	sl_cursor cur = l->lists[l->height-1].tail;
+	while(KEY_GREATER(cur->data.key, qKey)) {
 		if(cur->below)
 			cur = cur->below->prev;
 		else break;
@@ -114,12 +115,12 @@ sl_cursor sl_zigzag(sl_cursor cur, struct generic_data data) {
 }
 
 void sl_insert(struct sl *l, struct generic_data data) {
+	key_t qKey = data.key;
 	uchar_t i = 0, cl = l->height-1;
 	struct sl_node *n = malloc(sizeof(*n));
-	sl_cursor cur = l->lists[cl].tail;
-	cur = sl_zigzag(cur, data);
+	sl_cursor cur = sl_zigzag(l, qKey);
 
-	if(G_DATA_EQUAL(data, cur.data)) {
+	if(KEY_EQUAL(qKey, cur->data.key)) {
 		mds_error(E_ILLEGAL_ARGUMENT, "Got a similar key");
 		return;
 	}
@@ -142,14 +143,12 @@ void sl_insert(struct sl *l, struct generic_data data) {
 		cur = sl_insertAbove(cur);
 		i++;
 	}
+	l->size++;
 }
 
-void sl_remove(struct sl *l, key_t qKey) {
-	sl_cursor tempCur, cur = l->lists[l->height-1];
-	struct generic_data *d = malloc(sizeof(*d));
-	d->key = qKey;
-	cur = sl_zigzag(cur, d);
-	if(!G_DATA_EQUAL(cur, d)) {
+int sl_remove(struct sl *l, key_t qKey) {
+	sl_cursor tempCur, cur = sl_zigzag(l, qKey);
+	if(!KEY_EQUAL(cur->data.key, qKey)) {
 		mds_error(E_ILLEGAL_ARGUMENT, "Could not find key");
 		return;
 	}
@@ -160,5 +159,80 @@ void sl_remove(struct sl *l, key_t qKey) {
 		free(tempCur);
 		cur = cur->above;
 	} while(cur=cur->above);
+	l->size--;
 }
-		
+
+int sl_get(struct sl *l, key_t qKey) {
+	sl_cursor cur = sl_zigzag(l, qKey);
+	if(!KEY_EQUAL(cur->data.key, qKey)) {
+		mds_error(E_ILLEGAL_ARGUMENT, "Could not find key");
+		return;
+	}
+	return cur->data.value;
+}
+
+int sl_set(struct sl *l, key_t qKey, int value) {
+	int old_value;
+	sl_cursor cur = sl_zigzag(l, qKey);
+	if(!KEY_EQUAL(cur->data.key, qKey)) {
+		mds_error(E_ILLEGAL_ARGUMENT, "Could not find key");
+		return;
+	}
+	old_value = cur->data.value;
+	do {
+		cur->data.value = value;
+	} while(cur=cur->above);
+	return old_value;
+}
+/* Apply a merge of the two sorted lists */
+struct sl* sl_join(struct sl *l1, struct sl *l2) {
+	struct sl *joined = sl_init();
+	sl_cursor cur1 = l1->lists[0].head->next;
+	sl_cursor cur2 = l2->lists[0].head->next;
+	while(cur1->next && cur2->next) {
+		if(G_DATA_GREATER(cur1->data, cur2->data)) {
+			sl_insert(joined, cur1->data);
+			cur1 = cur1->next;
+		} else {
+			sl_insert(joined, cur2->data);
+			cur2 = cur2->next;
+		}
+	}
+	while(cur1->next) {
+		sl_insert(joined, cur1->data);
+		cur1 = cur1->next;
+	}
+	while(cur2->next) {
+		sl_insert(joined, cur2->data);
+		cur2 = cur2->next;
+	}
+	return joined;
+}
+
+void sl_remove_section(struct sl *l, key_t sKey, key_t eKey) {
+	sl_cursor start = sl_zigzag(l, sKey);
+	sl_cursor end = sl_zigzag(l, eKey);
+	end = end->prev;
+	do {
+		start->prev->next = end->next;
+		end->next->prev = start->prev;
+	} while((start=start->above) && (end=end->above));
+	if(start) {
+		do {
+			while(!end->above)
+				end=end->next;
+			end=end->above;
+			start->prev->next = end->next;
+	   		end->next->prev = start->prev;
+		} while(start=start->above);
+	}
+	if(end) {
+		do {
+			while(!start->above)
+				start=start->next;
+			start=start->above;
+			end->next->prev = start->prev;
+	   		start->prev->next = end->next;
+		} while(end=end->above);
+	}
+}

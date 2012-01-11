@@ -15,11 +15,9 @@
 #define _SKIP_LIST_H_
 
 #include "../mds/mds_data_types.h"
+#include "../mds/mds_errors.h"
 
 #define SL_MAX_SIZE		1024
-
-#define SL_MINUS_INF	0x00
-#define SL_PLUS_INF		0xff
 
 struct sl_node {
 	struct generic_data data;
@@ -36,8 +34,8 @@ typedef struct sl_node* sl_cursor;
 struct sl_list {
 	sl_node head;
 	sl_node tail;
-	uchar_t len;
 	uchar_t level;
+	uchar_t len;
 };
 
 struct sl {
@@ -64,19 +62,19 @@ sl_cursor sl_below(sl_cursor cur);
 sl_cursor sl_above(sl_cursor cur);
 /* Adds a new data element in the skip list */
 void sl_insert(struct sl *l, struct generic_data data);
-/* Removes the element data from the skip list based on the qKey */
-void sl_remove(struct sl *l, key_t qKey);
+/* Removes and returns the value associated with qKey */
+int sl_remove(struct sl *l, key_t qKey);
 /* Returns the value associated with key qKey */
-uint_t sl_get(struct sl *l, key_t qKey);
-/* Sets a new value for key qKey */
-void sl_set(struct sl *l, key_t qKey, uint_t value);
+int sl_get(struct sl *l, key_t qKey);
+/* Sets a new value for key qKey and returns the old value */
+int sl_set(struct sl *l, key_t qKey, int value);
 
 /* Joins two skip lists and returns a new skip list */
 struct sl* sl_join(struct sl *l1, struct sl *l2);
 /* Removes a section of a skip list 
  * The section starts at the first key greater or equal to sKey and 
- * ends at the first position less or equal to fKey */
-void sl_remove_section(struct sl *l, key_t sKey, key_t fKey);
+ * ends at the first position less or equal to eKey */
+void sl_remove_section(struct sl *l, key_t sKey, key_t eKey);
 
 
 #endif

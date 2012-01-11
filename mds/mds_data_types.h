@@ -60,14 +60,18 @@ struct generic_data {
 
 #include <string.h>
 
-#define G_DATA_MIN						0x00
-#define G_DATA_MAX						0xff
+#define KEY_MIN							0x00
+#define KEY_MAX							0xff
 
-#define G_DATA_CMP(a,b)					strcmp(a.key.name, b.key.name)
+#define KEY_CMP(a,b)					strcmp(a.name, b.name)
+#define KEY_EQUAL(a,b)					(KEY_CMP(a,b) == 0)
+#define KEY_GREATER(a,b)				(KEY_CMP(a,b) > 0)
+#define KEY_GREATER_OR_EQUAL(a,b)		(KEY_CMP(a,b) >= 0)
 
-#define G_DATA_EQUAL(a,b)				(G_DATA_CMP(a,b) == 0)
-#define G_DATA_GREATER(a,b)				(G_DATA_CMP(a,b) > 0)
-#define G_DATA_GREATER_OR_EQUAL(a,b)	(G_DATA_CMP(a,b) >= 0)
+#define G_DATA_CMP(a,b)					KEY_CMP(a.key, b.key)
+#define G_DATA_EQUAL(a,b)				(KEY_EQUAL(a.key,b.key) == 0)
+#define G_DATA_GREATER(a,b)				(KEY_GREATER(a.key,b.key) > 0)
+#define G_DATA_GREATER_OR_EQUAL(a,b)	(KEY_GREATE_OR_EQUAL(a.key,b.key) >= 0)
 
 
 #endif
