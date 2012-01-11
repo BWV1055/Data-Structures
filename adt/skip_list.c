@@ -84,6 +84,23 @@ inline sl_cursor sl_below(sl_cursor cur) {
 inline sl_cursor sl_above(sl_cursor cur) {
 	return cur->above;
 }
+/* Inserts and returns a new element above the current one and creates all the links */
+sl_cursor sl_insertAbove(sl_cursor cur) {
+	struct sl_node* tower_elem = malloc(sizeof(*tower_elem));
+	tower_elem->data = cur->data;
+	tower_elem->below = cur;
+	cur->above = tower_elem;
+	tower_elem->above = NULL;
+	cur = cur->prev;
+	while(!cur->above)
+		cur = cur->prev;
+	tower_elem->prev = cur->above;
+	cur = tower_elem->below->next;
+	while(!cur->above)
+		cur = cur->next;
+	tower_elem->next = cur->above;
+	return tower_elem;
+}
 
 void sl_insert(struct sl *l, struct generic_data data) {
 	uchar_t i = 0, cl = l->height-1;
@@ -109,12 +126,17 @@ void sl_insert(struct sl *l, struct generic_data data) {
 	cur->prev->next = n;
 	n->next = cur;
 	cur->prev = n;
-	while(rand()%2) {
-		if(i>=cl) {
-			cl = (++l->height)-1;
-			l->lists[cl] = make_list(cl);
-			/* To be completed */
-		}
-	}
+	n->below = n->above = NULL;
+	n->data = data;
 
+	cur = n;
+	while(rand()%2) {
+		if(i>cl) {
+			l->lists[l->height] = make_list(l, l->height);
+			sl_insertAbove(cur);
+			break;
+		}
+		cur = sl_insertAbove(cur);
+		i++;
+	}
 }
