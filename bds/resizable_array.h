@@ -32,14 +32,16 @@ struct resizable_array_small {
 struct resizable_array* ra_init();
 /* Returns a newly initialized resizable array with init_cap initial capacity */
 struct resizable_array* ra_init_capacity(size_t init_cap);
-
-void ra_insert(struct resizable_array*, struct generic_data*, int);
-struct generic_data ra_remove(struct resizable_array*, int);
-
-struct resizable_array* ra_init();
-void ra_walk(struct resizable_array*, void (*)(struct generic_data));
-
-size_t ra_size(struct resizable_array*);
-int ra_isEmpty(struct resizable_array*);
+/* Inserts data at position pos and shifts remaining elements right */
+void ra_insert(struct resizable_array *ra, struct generic_data data, int pos);
+/* Removes and returns the element at position pos */
+struct generic_data ra_remove(struct resizable_array *ra, int pos);
+/* Walks through every element of ra and applies function f 
+ * See the description for ll_walk in linked_list.h for more details */
+void ra_walk(struct resizable_array *ra, (void*)(*f)(struct generic_data));
+/* Returns the number of elements stored in ra */
+size_t ra_size(struct resizable_array *ra);
+/* Returns 0 if there are elements in the array, greater than zero otherwise */
+uchar_t ra_isEmpty(struct resizable_array *ra);
 
 #endif
