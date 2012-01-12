@@ -5,7 +5,6 @@
  *
  */
 
-#include "../mds/mds_errors.h"
 #include "doubly_linked_list.h"
 
 void dll_insert(struct doubly_linked_list *dll, struct generic_data data, int pos)
@@ -73,4 +72,15 @@ struct doubly_linked_list* dll_init()
 	init->head = malloc(sizeof *(init->head));
 	init->head->next = init->head->prev = init->head;
 	return init;
+}
+
+/* Visiting function examples */
+
+void dll_compare_value(struct generic_data data) {
+	/* The function calling dll_compare_value should also declare these two as extern 
+	 * So they can be used as a way of transmitting data */
+	extern key_t tempKey;
+	extern pos;
+	if(data.key>tempKey)
+		pos = 1;
 }
