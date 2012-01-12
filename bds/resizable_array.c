@@ -6,21 +6,24 @@
  */
 
 #include "resizable_array.h"
-#include <stdio.h>
 
-struct resizable_array* ra_init_capacity(size_t cap)
-{
+struct resizable_array* ra_init_capacity(size_t cap) {
 	if(cap<=0) {
-		mds_error(0, "Size of array must be greater than zero");
+		mds_error(E_ILLEGAL_ARGUMENT, "Size of array must be greater than zero");
 		return NULL;
 	}
 
 	/* Possibly check if the total size of memory 
 	 * being allocated is larger than a threshold */	
 
-	struct resizable_array *ra = malloc(sizeof *ra);
-	if(ra==NULL)
+	struct resizable_array *ra = malloc(sizeof(*ra));
+	if(!ra) {
+		mds_error(E_MALLOC_NULL, "Could not allocate memory");   	
 		return NULL;
+	}
+	ra->cap = cap;
+	ra->size = 0;
+	ra->list = (ra->cap)*malloc(sizeof(*ra->list));
 
 	/* Optional
 	int i;
@@ -28,23 +31,23 @@ struct resizable_array* ra_init_capacity(size_t cap)
 		memcpy(ra->list[i], NULL, sizeof(struct generic_data*));
 	ra->size = 0;
 	*/
-	ra->cap = cap;
 
 	return ra;
 }
 
-struct resizable_array* ra_init()
-{
-	return ra_init_capacity(16);
+struct resizable_array* ra_init() {
+	return ra_init_capacity(RA_INITLIST);
 }
 
 /* Increase by doubling
  * (a=2) */
 void ra_inc(struct resizable_array *ra)
 {
-	size_t nbytes, extracap, ncap = 2 * ra->cap;
-	if(ncap > RA_MAXLIST)
-		ncap = RA_MAXLIST;
+	struct generic_data *n_list;
+	if(ra->cap == RA_MAXLIST) {
+		mds_error(E_RA_MAX_CAPACITY, "Reached maximum capacity");
+		return;
+	}
 	/* Either set every new entry to NULL
 	 * or malloc() it*/
 	/* Optional
@@ -54,81 +57,86 @@ void ra_inc(struct resizable_array *ra)
 	struct generic_data **start = &ra->list[ra->cap];
 	memcpy(start, nlist, nbytes);
 	*/
-	ra->cap = ncap;
+	n_list = realloc(ra->list, 2*ra->cap*sizeof(*ra->list));
+	if(!n_list) {
+		mds_error(E_MALLOC_NULL, "Could not increase the size of the array");
+		return;
+	}
+	ra->list = n_list;
+	ra->cap = 2*ra->cap;
 }
 
 /* Decrease to a quarter
  * */
 void ra_dec(struct resizable_array *ra)
 {
-	if(ra->size<=ra->cap/4) {
-		size_t ncap = ra->cap/2;
+	struct generic_data *n_list = realloc(ra->list, (ra->cap/2)*sizeof(*ra->list));
 		/* Optional
 		struct generic_data *nlist[ncap];
 		memcpy(nlist, ra->list, ra->size);
 		memcpy(ra->list, nlist, ncap);
 		*/
-		ra->cap = ncap;
-	}
+	/* This should not happen */
+	if(!n_list) {
+		mds_error(E_MALLOC_NULL, "Could not decrease the size of the array");
+		return;
+	} 
+	ra->list = n_list;
+	ra->cap = ra->cap/2;
 }
 
-void ra_insert(struct resizable_array *ra, struct generic_data *d, int pos)
-{
-	if(pos<0)
-		mds_error(1, "Cannot insert element at negative index");
-	if(pos>ra->size)
-		mds_error(1, "Insert new element with out of range index");
+void ra_insert(struct resizable_array *ra, struct generic_data data, int pos) {
+	int i;
+	if(pos<0 || pos>ra->size)
+		mds_error(E_ILLEGAL_ARGUMENT, "Position inexistent");
 
 	if(ra->size==ra->cap)
 		ra_inc(ra);
 
-	struct generic_data **list = ra->list;
-	int i;
-	if(ra->size)
-		for(i=ra->size; --i>=pos; )
-			list[i+1] = list[i];
+	for(i=ra->size; --i>=pos; )
+		ra->list[i+1] = ra->list[i];
 
-	list[pos] = d;
+	ra->list[pos] = data;
 	ra->size++;
 }
 
 /* Data should be malloc()'ed
  * before being added to the list */
-struct generic_data ra_remove(struct resizable_array *ra, int pos)
-{
-	if(ra_isEmpty(ra))
+struct generic_data ra_remove(struct resizable_array *ra, int pos) {
+	if(ra_isEmpty(ra)) {
 		mds_error(0, "Empty list");
-	if(pos<0)
-		mds_error(1, "Cannot delete element at negative index");
-	if(pos>ra->size-1)
-		mds_error(1, "Delete element with out of range index");
+		return;
+	}
+	if(pos<0 || pos>ra->size-1) {
+		mds_error(E_ILLEGAL_ARGUMENT, "Position inexistent");
+		return;
+	}
 
-	struct generic_data **list = ra->list;
-	struct generic_data data = *list[pos];
 	int i;
+	struct generic_data data = *list[pos];
 	for(i=pos; i++<ra->size-1; )
-		list[i] = list[i+1];
+		ra->list[i] = ra->list[i+1];
 	ra->size--;
 
 	if(ra->size<=ra->cap/4)
 		ra_dec(ra);
+	return data;
 }
 
-size_t ra_size(struct resizable_array *ra)
-{
+size_t ra_size(struct resizable_array *ra) {
 	return ra->size;
 }
 
-int ra_isEmpty(struct resizable_array *ra)
-{
+uchar_t ra_isEmpty(struct resizable_array *ra) {
 	return (ra_size(ra)==0);
 }
-
-void ra_walk(struct resizable_array *ra, void (*f)(struct generic_data))
-{
-	if(ra->size) {
-		int i;
-		for(i=-1;++i<ra->size; )
-			f(*ra->list[i]);
-	}
+/* Positions returned: from 0 to n-1 */
+void ra_walk(struct resizable_array *ra, (void*)(*f)(struct generic_data data)) {
+	int i;
+	if(!ra->size)
+		return;
+	for(i=-1;++i<ra->size; )
+		if(!f(*ra->list[i]))
+			break;
+	return i;
 }
