@@ -84,4 +84,11 @@ void bt_add_left(struct bt *t, struct bt_node n, struct bt_node stroot);
 /* Adds a subtree as right child on node n, returns if there is a right child */
 void bt_add_right(struct bt *t, struct bt_node n, struct bt_node stroot);
 
+/* Reads tree data from file f and creates a binary tree based on this data
+ * See tr_read_file() description in tree.h for the format of the file */
+struct bt* bt_read_file(FILE *f);
+/* Writes tree t data to file f 
+ * See above */
+void bt_write_file(struct bt *t, FILE *f);
+
 #endif

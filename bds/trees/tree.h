@@ -112,4 +112,20 @@ tr_cursor tr_remove_subtr(struct tree *t, struct tr_node qNode);
  * Returns NULL if the operation failed, or a cursor to the newly create child of qNode */
 tr_cursor tr_add_subtr(struct tree *t, struct tr_node qNode, struct tr_node subTree);
 
+
+/* Reads tree data from file f and creates a tree based on this data 
+ * Data in the file should be structured as follows:
+ * 	First line should contain the maximum number of children of a node (eg: 2 for binary)
+ *	The rest of the lines should contain pairs of key-value, one on each line
+ *	The root should be the first in this set of lines, and the next lines should contain 
+ * 	key-value pairs for the children of the root, then key-value pairs for the first child,
+ *	and so on.
+ *	If there is no child at a certain position, the coresponding line should be left empty.
+ * See tree_example.txt for an example (line numbers should be turned on for large files)
+ *  */
+struct tree* tr_read_file(FILE *f);
+/* Writes tree t to file f 
+ * The format of the file is similar to the description above */
+void tr_write_file(struct tree *t, FILE *f);
+
 #endif
