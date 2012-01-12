@@ -52,6 +52,8 @@ static char **error_lookup_tbl = {
 	"RESERVED",					/* 30 */
 	"E_EMPTY_STACK",
 	"E_FULL_STACK",
+	"E_EMPTY_QUEUE",
+	"E_FULL_QUEUE",
 };
 
 
