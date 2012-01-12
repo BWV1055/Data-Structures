@@ -2,57 +2,151 @@
  * Generic binary tree implementation
  */
 
-struct bt* bt_init(struct generic_data d)
+struct bt* bt_init(struct generic_data data)
 {
-	struct bt *t = malloc(sizeof *t);
-	t->root = malloc(sizeof(struct bt_node));
-	t->root->d = d;
-	t->root->l = t->root->r = NULL;
+	struct bt *t = malloc(sizeof(*t));
+	t->root = malloc(sizeof(*t->root));
+	t->root->data = data;
+	t->root->left = t->root->right = t->root->parent = NULL;
+	t->flags = 0;
 	return t;
 }
 
-void bt_insert(struct bt_node *p, struct generic_data d)
-{
-	struct bt_node *n = malloc(sizeof *n);
-	n->v = d;
-	n->l = n->r = NULL;
-	if(!p->right) {
-		p->r = n;
-	} else {	
-		n->l = p->l;
-		p->l = n;
+bt_cursor bt_insert(struct bt_node n, struct generic_data data) {
+	struct bt_node *new_n = malloc(sizeof(*new_n));
+	if(n.left && n.right) {
+		mds_error(E_TREE_NODE_FULL, "This node has no more empty slots to add children");
+		return NULL;
 	}
+	new_n->data = data;
+	new_n->left = new_n->right = NULL;
+	if(!n.left)
+		n.left = new_n;
+	else	
+		n.right = new_n;
+	new_n->parent = &n;
+	return new_n;
 }
 
-void bt_trav_in_order(struct bt_node *n, void(*f)(struct generic_data))
-{
-	if(n->l)
-		bt_trav_in_order(n->l, f);
-	f(n->d);
-	if(n->r)
-		bt_trav_in_order(n->r, f);
+uchar_t bt_isProper(struct bt *t) {
+	return bt_traversal_in(t, tr_node_proper);
 }
 
-void bt_trav_pre_order(struct bt_node *n, void(*f)(struct generic_data))
+void bt_subtr_trav_in(struct bt_node n, void(*f)(struct generic_data))
 {
-	f(n->d);
-	if(n->l)
-		bt_trav_in_order(n->l, f);
-	if(n->r)
-		bt_trav_in_order(n->r, f);
+	if(n.left)
+		bt_trav_in_order(n.left, f);
+	f(n.data);
+	if(n.right)
+		bt_trav_in_order(n.right, f);
 }
 
-void bt_trav_post_order(struct bt_node *n, void(*f)(struct generic_data))
+void bt_subtr_trav_pre(struct bt_node n, void(*f)(struct generic_data))
 {
-	if(n->l)
-		bt_trav_in_order(n->l, f);
-	if(n->r)
-		bt_trav_in_order(n->r, f);
-	f(n->d);
+	f(n.data);
+	if(n.left)
+		bt_trav_in_order(n.left, f);
+	if(n.right)
+		bt_trav_in_order(n.right, f);
 }
+
+void bt_subtr_trav_post(struct bt_node n, void(*f)(struct generic_data))
+{
+	/* return (n.left?bt_trav_in_order(*n.left):0) && (n.right?bt_trav_in_order(*n.right):0) && f(n.data); */
+	if(n.left)
+		bt_trav_in_order(*n.left, f);
+	if(n.right)
+		bt_trav_in_order(*n.right, f);
+	f(n.data);
+}
+
+struct generic_data* bt_get_left(struct bt_node n) {
+	if(n.left)
+		return &n.left->data;
+	return NULL;
+}
+
+struct generic_data* bt_get_right(struct bt_node n) {
+	if(n.right)
+		return &n.right->data;
+	return NULL;
+}
+
+struct generic_data* bt_get_parent(struct bt_node n) {
+	if(n.parent)
+		return &n.parent->data;
+	return NULL;
+}
+
+void bt_set_left(struct bt_node n, struct generic_data data) {
+	struct bt_node *n_new = malloc(sizeof(*n_new));
+	if(n.left) {
+		n.left->data = data;
+		return;
+	}
+	n_new->data = data;
+	n_new->left = n_new->right = NULL;
+	n_new->parent = &n;
+	n.left = n_new;
+}
+
+void bt_set_right(struct bt_node n, struct generic_data data) {
+	struct bt_node *n_new = malloc(sizeof(*n_new));
+	if(n.right) {
+		n.right->data = data;
+		return;
+	}
+	n_new->data = data;
+	n_new->left = n_new->right = NULL;
+	n_new->parent = &n;
+	n.right = n_new;
+}
+
+void bt_set_parent(struct bt_node n, struct generic_data data) {
+	if(n.parent)
+		n.parent->data = data;
+}
+
+uchar_t bt_height(struct bt_node qNode) {
+	return MAX((qNode.left?1+bt_height(*qNode.left):0), (qNode.right?1+bt_height(*qNode.right):0));
+}
+
+uchar_t bt_depth(struct bt_node qNode) {
+	return (qNode.parent?1+bt_depth(*qNode.parent):0);
+}
+
+uchar_t bt_isInternal(struct bt_node n) {
+	return n.left || n.right;
+}
+
+void bt_add_left(struct bt_node n, struct bt_node stroot) {
+	if(n.left)
+		return;
+	n.left = &stroot;
+	stroot.parent = n;
+}
+
+void bt_add_right(struct bt_node n, struct bt_node stroot) {
+	if(n.right)
+		return;
+	n.right = &stroot;
+	stroot.parent = n;
+}	
+
+void bt_remove_left(struct bt_node n) {
+	if(!n.left)
+		return;
+	bt_subtr_trav_in(*n.left, bt_remove_node);
+	n.left = NULL;
+}
+void bt_remove_right(struct bt_node n);
+
+
+
+
 
 /* Useful node visiting functions */
-void n_chd(struct bt_node n) {
+void bt_n_chd(struct bt_node n) {
 	n.total_descendants = n_chd_r(n);
 }
 

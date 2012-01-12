@@ -32,15 +32,21 @@
 #define E_ILLEGAL_STATE				14
 #define E_ILLEGAL_ARGUMENT			15
 
-/* st_push() is stack is full */
+/* s_push() if stack is empty */
 #define E_EMPTY_STACK				31
-/* st_pop() is stack is empty */
+/* s_pop() if stack is full */
 #define E_FULL_STACK				32
+/* q_dequeue() is queue is empty */
+#define E_EMPTY_QUEUE				33
+/* q_enqueue() is queue is full */
+#define E_FULL_QUEUE				34
 /* tr_insert() with non existent path */
 #define E_INVALID_POSITION			51
 /* tr_parent() called on root */
 #define E_BOUNDARY_VIOLATION		52
 /* tr_root() called on an empty tree */
 #define E_EMPTY_TREE				53
+/* tr_insert into a node with no empty children */
+#define E_TREE_NODE_FULL			54
 
 #endif
