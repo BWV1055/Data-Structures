@@ -1,8 +1,8 @@
 /*
  * Stack implementation using a singly linked list
- * Push and pop operations run in O(1) time
+ * Push/pop/peek operations run in O(1) time
  * 
- * For underflow/overflow cases, an error message is returned
+ * For underflow/overflow cases, an error message is printed
  * 
  */
 
@@ -17,25 +17,25 @@
 #define STACK_OP_POP			(1<<1)
 #define STACK_OP_PEEK			(1<<2)
 
-struct stack {
-	struct linked_list list;
-	uchar flags;
-	uchar last_op;
-};
+typedef struct {
+	struct linked_list *list;
+	uchar_t flags;
+	uchar_t last_op;
+} stack_t;
 
 /* Returns a newly initialized stack */
-struct stack* s_init();
+stack_t* s_init();
 /* Pushes a new element onto the stack */
-void s_push(struct stack *s, struct generic_data data);
+void s_push(stack_t *s, struct generic_data data);
 /* Returns the element at the top of the stack and removes it */
-struct generic_data s_pop(struct stack *s);
-/* Returns the element at the top of the stack, but does not remove it 
- * This operation allows both to examine the top of the stack, and to
- * change the value (which would otherwise require a push/pop) */
-struct generic_data* s_peek(struct stack *s);
+struct generic_data s_pop(stack_t *s);
+/* Returns the element at the top of the stack, but does not remove it */
+struct generic_data s_peek(stack_t *s);
 /* Returns the number of elements in the stack */
-size_t s_size(struct stack *s);
+size_t s_size(stack_t *s);
 /* Returns 0 if the stack is empty, 1 otherwise */
-uchar s_isEmpty(struct stack *s);
+uchar_t s_isEmpty(stack_t *s);
+/* Prints the elements in a stack, with the element at the top first */
+void s_print(stack_t *s);
 
 #endif

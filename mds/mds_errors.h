@@ -35,6 +35,23 @@ static char **error_lookup_tbl = {
 	"E_MAX_SIZE",
 	"E_ILLEGAL_STATE",	/* Operation cannot perform in this state */
 	"E_ILLEGAL_ARGUMENT" /* getPrev(head) */
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",					/* 20 */
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",
+	"RESERVED",					/* 30 */
+	"E_EMPTY_STACK",
+	"E_FULL_STACK",
 };
 
 
