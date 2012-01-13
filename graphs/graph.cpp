@@ -4,42 +4,26 @@
  *	This implementation uses an adjacency list to store the graph
  *
  *
+ *  Example of using pointers and arrays of objects:
+  CRectangle a, *b, *c;
+  CRectangle * d = new CRectangle[2];
+  b= new CRectangle;
+  c= &a;
+  a.set_values (1,2);
+  b->set_values (3,4);
+  d->set_values (5,6);
+  d[1].set_values (7,8);
+ *  
+ *
  *
  */
 
-class Vertex
-{
-	Entry entry;
-	/* List of adjacent vertices */
-	AdjLinkedList adjList;
+using namespace std;
 
-};
+#include "vertex.h"
+#include "graph.h"
 
-class Edge
-{
-	int value;
-	char flags;
-	Vertex*	from;
-	Vertex* to;
 
-public:
-	Edge(int value, Vertex* to, Vertex* from, char flags=0);
-	int getValue();
-	Vertex[] getEndPoints();
-	bool isDirected();
-};
 
-class Graph
-{
-	int size;
-	Vertex vertices[100];
 
-public:
-	void addVertex(Vertex nVertex);
-	Vertex removeVertex(Vertex qVertex);
-	Vertex getVertex(Vertex qVertex);
-	bool adjacent(Vertex fVertex, Vertex sVertex);
-	Vertex[] neighbors(Vertex qVertex);
-
-}
 
