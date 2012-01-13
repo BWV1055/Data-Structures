@@ -56,11 +56,22 @@ public:
 	bool isPart(const Vertex* qVertex);
 };
 
+class AdjacencyListCursor
+{
+	AdjacencyListEntry* currentPos;
+public:
+	AdjacencyListCursor(AdjacencyListEntry *pos) : currentPos(pos) {}
+	AdjacencyListCursor next();
+	AdjacencyListCursor prev();
+	AdjacencyListEntry element();
+};
+
 class AdjacencyListEntry
 {
 public:
 	Edge* pair;
-	AdjacencyListEntry* next;
+	AdjacencyListCursor next;
+	AdjacencyListCursor prev;
 
 public:
 	AdjacencyListEntry(Edge* nPair, AdjacencyListEntry* nNext) : pair(nPair), next(nNext) {}
@@ -73,11 +84,22 @@ public:
 class AdjacencyList
 {
 public:
+enum : {MAX_SIZE = 1024};
 	int size;
-	AdjacencyListEntry* root;
-	AdjacencyListEntry* tail;
+	AdjacencyListCursor root;
+	AdjacencyListCursor tail;
 public:
 	AdjacencyList() : size(0), root(NULL), tail(NULL) {}
+	/* Returns a cursor at the root of the list */
+	AdjacencyListCursor root();
+	/* Returns a cursor at the tail of the list */
+	AdjacencyListCursor tail();
+	/* Returns the number of elements in the list */
+	int size();
+	/* Returns true if the list is empty */
+	bool isEmpty();
+	/* Returns the maximum possible number of elements in the list */
+	int maxSize();
 	/* void setRoot(AdjacencyListEntry* nRoot); */
 	/* Adds a new vertex on the last position of the list */
 	void add(Edge pair);
@@ -98,6 +120,7 @@ class Vertex
 	Entry data;
 	/* List of adjacent vertices */
 	AdjacencyList adjList;
+	char flags;
 public:
 	Vertex(Entry nData, AdjacencyList nAdjList = NULL) : data(nData), adjList(nAdjList) {}
 	Entry getData();

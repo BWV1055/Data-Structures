@@ -1,5 +1,5 @@
 /*
- *	Linked list implementation in C++
+ *	Adjacency list using a linked list implementation
  *
  *
  */
@@ -22,6 +22,37 @@ void AdjacencyListEntry::setNext(AdjacencyListEntry* nNext) {
 	this->next = nNext;
 }
 
+AdjacencyListCursor AdjacencyListCursor::next() {
+	return this->next;
+}
+
+AdjacencyListCursor AdjacencyListCursor::prev() {
+	return this->prev;
+}
+
+Edge* AdjacencyListCursor::element() {
+	return this->pair;
+}
+
+AdjacencyListCursor AdjacencyList::root() {
+	return this->root;
+}
+
+AdjacencyListCursor AdjacencyList::tail() {
+	return this->tail;
+}
+
+int AdjacencyList::size() {
+	return this->size;
+}
+
+bool AdjacencyList::isEmpty() {
+	return (this->size==0);
+}
+
+int AdjacencyList::maxSize() {
+	return MAX_SIZE;
+}
 
 void AdjacencyList::add(Edge pair) {
 	AdjacencyListEntry newLE (&pair, NULL);
@@ -158,6 +189,7 @@ bool Vertex::checkAdjacency(Vertex vertex) {
 }
 
 void* remove_edge(Edge pair, Vertex* vertex, void* empty) {
-	if(pair.isPart(vertex))
+	if(pair.isPart(vertex)) 
+		pair.isPart(vertex);
 }
 		
