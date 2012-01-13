@@ -18,7 +18,7 @@ class AdjacencyList;
 class Vertex;
 
 typedef Vertex* EdgePair[2];
-typedef void* (&adjListWalk)(Edge);
+typedef void* (&adjListWalk)(Edge, void*, void*);
 
 /* key-value type entries 
  * The key is currently not used, the sorting is done on value */
@@ -36,13 +36,12 @@ public:
 
 class Edge
 {
-	static const int UNDIRECTED = 0;
-	static const int DIRECTED = 1;	
+	enum { UNDIRECTED = 0, DIRECTED = 1 };
 	int cost;
 	/* Directed/undirected edge */
 	char flags;
-	Vertex* to;
 	Vertex*	from;
+	Vertex* to;
 	/*
 	Edge* start;
 	Edge* end;
@@ -51,7 +50,7 @@ public:
 	Edge(int nCost, Vertex* nTo, Vertex* nFrom, char nFlags=0) : cost(nCost), to(nTo), from(nFrom), flags(nFlags) {}
 	bool isDirected();
 	int getCost();
-	void setCost();
+	void setCost(int nCost);
 	EdgePair* getEndPoints();
 	/* Returns true if qVertex is either end of the edge */
 	bool isPart(const Vertex* qVertex);
@@ -84,9 +83,14 @@ public:
 	void add(Edge pair);
 	/* Removes and returns the last pair in the list */
 	Edge remove();
+	/* Removes the first occurent of pair from the list */
+	void removeEdge(Edge* pair);
 	/* Check if there is an edge with qAdj */
 	bool exists(const Vertex* qAdj);
-	int walk(adjListWalk f);
+	/* The second parameter of adjListWalk is used for bringing in additional data
+	 *  to use with adjListWalk, and the third parameter is what adjListWalk returns 
+	 * The walk stops when it receives a NULL, and it returns the third argument */
+	const void* walk(adjListWalk f);
 };
 
 class Vertex
@@ -98,11 +102,11 @@ public:
 	Vertex(Entry nData, AdjacencyList nAdjList = NULL) : data(nData), adjList(nAdjList) {}
 	Entry getData();
 	void setData(Entry nData);
-	Edge* addEdge(Vertex nVertex);
-	void removeEdge(Vertex nVertex);
-	int getCost(Vertex nVertex);
-	void setCost(Vertex nVertex);
-	bool checkAdjacency(Vertex nVertex);
+	Edge* addEdge(Vertex vertex, int cost);
+	void removeEdge(Vertex vertex);
+	int getCost(Vertex vertex);
+	void setCost(Vertex vertex, int cost);
+	bool checkAdjacency(Vertex vertex);
 };
 
 
