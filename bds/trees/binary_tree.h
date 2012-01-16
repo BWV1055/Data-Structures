@@ -47,7 +47,7 @@ uchar_t bt_depth(struct bt_node qNode);
  * Returns a cursor to the newly created node or NULL if it fails 
  * This is like calling bt_set_left and bt_set_right, except no new node is created */
 bt_cursor bt_insert(struct bt_node n, struct generic_data data);
-/* Returns 1 if node is internal, else 0 
+/* Returns 1 if node is internal (has at least one child), else 0 
  * Use !bt_isInternal() to check if a node is external */
 uchar_t bt_isInternal(struct bt_node n);
 /* Returns the value of the left child of node n, or NULL if there is no left child */
