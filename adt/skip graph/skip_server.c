@@ -38,9 +38,16 @@ void act_on_opcode() {
 	char opcode;
 	int node_id;
 	int key_len;
+	char direction;
 	char *key = malloc(100*sizeof(char));
 
-	int buf_pos = 0;
+	int buf_pos;
+	int msize;
+	char *mback;
+
+	int socket_back_fd;
+
+	buf_pos = 0;
 	buf_read_char(buffer, &buf_pos, &opcode);
 	switch(opcode) {
 	case SearchOp:
@@ -58,34 +65,76 @@ void act_on_opcode() {
 		if(r_node==NULL)
 			exit(1);
 		if(!strcmp(r_node->data.key.name, key)) {
-			int buf_pos = 0;
+			buf_pos = 0;
 			/* Found Opcode + key_len + key + value */
-			int msize = 1+4+strlen(key)+4;
-			char *mback = (char*)malloc(msize*sizeof(char));
+			msize = 1+4+strlen(key)+4;
+			mback = (char*)malloc(msize*sizeof(char));
 			buf_add_char(mback, &buf_pos, FoundOp);
 			buf_add_int(mback, &buf_pos, key_len);
 			buf_add_string_len(mback, &buf_pos, key_len, key);
 			buf_add_int(mback, &buf_pos, value);
 			assert(buf_pos==msize);
 
-			int socket_back_fd = socket_connect(source_ip, source_port);
+			socket_back_fd = socket_connect(source_ip, source_port);
 			socket_send_message(socket_back_fd, mback);
+			free(mback);
 			return;
 		}
-		if(strcmp(r_node->data.key.name, key)>0) {
-
-
-
+		if(strcmp(r_node->data.key.name, key)<0) {
+			/* Go down through the right neighbors on each level and stop at the first value greater than key */
+			for( ;level>=0;level--) {
+				if(!r_node->right_keys[level])
+					continue;
+				if(strcmp(r_node->right_keys[level], key)>0)
+					break;
+			}
+			direction = 1;
 		} else {
-
-
-
-
+			for( ;level>=0;level--) {
+				if(!r_node->left_keys[level])
+					continue;
+				if(strcmp(r_node->left_keys[level], key)<0)
+					break;
+			}
+			direction = -1;
 		}
-
-		
-
-
+		if(level>=0) {
+			buf_pos=0;
+			/* SearchOp NodeId KeyLength Key Level IP Port */
+			msize = 1+4+4+strlen(key)+4+4+2; /* replace with sizeofs */
+			mback = (char*)malloc(msize*sizeof(char));
+			buf_add_char(mback, &buf_pos, SearchOp);
+			if(direction==1)
+				buf_add_int(mback, &buf_pos, r_node->right_ids[level]);
+			else {
+				buf_add_int(mback, &buf_pos, r_node->left_ids[level]);
+				buf_add_int(mback, &buf_pos, key_len);
+				buf_add_string_len(mback, &buf_pos,key_len, key);
+				buf_add_int(mback, &buf_pos, level);
+				buf_add_int(mback, &buf_pos, source_ip);
+				buf_add_short(mback, &buf_pos, source_port);
+			}
+			assert(buf_pos==msize);
+			if(direction==1)
+				socket_back_fd = socket_connect(r_node->right_ips[level], r_node->right_pors[level]);
+			else
+				socket_back_fd = socket_connect(r_node->left_ips[level], r_node->left_pors[level]);
+			socket_send_message(socket_back_fd, mback);
+			free(mback);
+			return;
+		} else {
+			buf_pos=0;
+			/* NotFoundOp KeyLength Key */
+			msize = 1+4+strlen(key);
+			mback = (char*)malloc(msize*sizeof(char));
+			buf_add_char(mback, &buf_pos, NotFoundOp);
+			buf_add_int(mback, &buf_pos, key_len);
+			buf_add_string_len(mback, &buf_pos, key_len, key);
+			socket_back_fd = socket_connect(source_ip, source_port);
+			socket_send_message(socket_back_fd, mback);
+			free(mback);
+			return;
+		}
 	case AddOp:
 		
 }

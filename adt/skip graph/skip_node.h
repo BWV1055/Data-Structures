@@ -20,17 +20,26 @@
 
 
 struct skip_node {
-	struct generic_data data;
+	int id;
+	struct generic_data *data;
 	uint32_t maxLevel;
 	/* Server sockets are located on the left side of the node */
 	int *soc_server_fd;
-	/* array of predecessor sockets */
-	int *soc_left_fd;
+	/* arrays of predecessor IPs, ports, keys and ids */
+	int *left_ips;
+	int *left_ports;
+	char **left_keys;
+	int *left_ids;
 	/* array of successor sockets */
-	int *soc_right_fd;
+	int *right_ips;
+	int *right_ports;
+	char **right_keys;
+	int *right_ids;
 	/* membership vector */
 	unsigned long long m;
 	char flags;
+	/* Skip nodes on a machine form a list */
+	struct skip_node *next;
 };
 
 typedef skip_node* sg_cursor;
