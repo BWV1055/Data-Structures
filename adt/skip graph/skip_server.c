@@ -20,6 +20,7 @@ enum OpCode {
 #define MAXMSG	512
 
 char buffer[MAXMSG];
+struct skip_node_list local_nodes;
 
 int read_from_client(int fd)
 {
@@ -37,6 +38,7 @@ int read_from_client(int fd)
 void act_on_opcode() {
 	char opcode;
 	int node_id;
+	int new_node_id;
 	int key_len;
 	char direction;
 	char *key = malloc(100*sizeof(char));
@@ -135,10 +137,35 @@ void act_on_opcode() {
 			free(mback);
 			return;
 		}
-	case AddOp:
-		
+	/* LocalNodeId NewNodeId KeyLength Key Level IP Port */
+	case LinkOp:
+		fprintf(stderr, "Link Op: ");
+		buf_read_int(buffer, &buf_pos, &node_id);
+		sg_cursor r_node;
+		if(r_node=snl_get_by_id(&local_nodes, node_id))
+			fprintf(stderr, "with local node with key %s ", r_node->data->key.name);
+		else
+			return;
+		buf_read_int(buffer, &buf_pos, &new_node_id);
+		buf_read_int(buffer, &buf_pos, &key_len);
+		buf_read_string_len(buffer, &buf_pos, &key_len, &key);
+		key[key_len]='\0';
+		buf_read_int(buffer, &buf_pos, &level);
+		buf_read_int(buffer, &buf_pos, &source_ip);
+		buf_read_short(buffer, &buf_pos, &source_port);
+		fprintf(stderr, ",new key - %s, at level - %d\n", key, level, node_id);
+		if(strcmp(key, r_node->data->key.name)>0) {
+			r_node->right_ips[level]=source_ip;
+			r_node->right_ports[level]=source_port;
+			r_node->right_keys[level]=key;
+			r_node->right_ids[level]=new_node_id;
+		} else {
+			r_node->left_ips[level]=source_ip;
+			r_node->left_ports[level]=source_port;
+			r_node->left_keys[level]=key;
+			r_node->left_ids[level]=new_node_id;
+		}
 }
-
 int main()
 {
 	int server_socket_fd, comm_socket_fd;
