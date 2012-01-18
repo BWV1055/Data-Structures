@@ -8,6 +8,10 @@
  *
  */
 
+#ifndef _SKIP_NODE_H_
+#define _SKIP_NODE_H_
+
+#include "../../mds/mds_data_types.h"
 #define SG_MAX_LEVELS	log(ULLONG_MAX+1)/log(2)
 
 #define SG_SEARCH_OP	1
@@ -17,19 +21,16 @@
 
 struct skip_node {
 	struct generic_data data;
+	uint32_t maxLevel;
+	/* Server sockets are located on the left side of the node */
+	int *soc_server_fd;
 	/* array of predecessor sockets */
 	int *soc_left_fd;
 	/* array of successor sockets */
 	int *soc_right_fd;
-	int *soc_server_fd;
-	struct skip_node *left;
-	struct skip_node *right;
-	uint32_t maxLevel;
 	/* membership vector */
 	unsigned long long m;
 	char flags;
-	/* The address of the machine storing this node */
-	uint32_t address;
 };
 
 typedef skip_node* sg_cursor;
@@ -44,3 +45,8 @@ char sn_select_neighbor(skip_node sn, key_t qKey);
  * The op is the operation code, the machine is referenced with the socket fd 
  * and qKey is the query key */
 void sn_send_message(skip_node sn, char op, int out_socket, key_t qKey);
+/* Add a new skip node with key qKey to the skip graph starting from skip node v */
+void sn_add(skip_node v, key_t qKey);
+
+
+#endif

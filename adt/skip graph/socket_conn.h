@@ -18,19 +18,39 @@ int socket_open_server_socket(int port) {
 		error("ERROR opening socket");
 	if(bind(server_socket_fd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))<0)
 		error("ERROR on binding");
+	listen(server_socket_fd, 5);
 	return server_socket_fd;
 }
-/* Opens a new socket for communication with a client on the port 
- * listened by server_socket_fd  */
-int socket_open_comm_socket(int server_socket_fd) {
+/* Listens for a new connection request from a client and creates a file descriptor
+ * when such a request appears */
+int socket_server_accept(int server_socket_fd) {
 	int comm_socket_fd;
 	struct sockaddr_in cli_addr;
-	listen(server_socket_fd, 5);
 	comm_socket_fd = accept(server_socket_fd, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
 	if(comm_socket_fd<0)
 		error("ERROR on accept");
 	return comm_socket_fd;
 }
+/* Client connects to server and returns the socket_fd for this connection */
+int socket_connect(char *hostname, int port) {
+	int socket_fd;
+	struct hostent *server;
+	struct sockaddr_in serv_addr;
+
+	server = gethostbyname(hostname);
+	if(server==NULL)
+		error("Could not locate %s\n", hostname);
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+	serv_addr.sin_port = htons(port);
+	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if(connect(socket_fd, &serv_addr, sizeof(serv_addr)<0))
+		error("ERROR connecting");
+	return socket_fd;
+}
+	
+
 /* Reads a new message from the comm_socket_fd
  * And call appropriate function based on the received code 
  * Both client and server use this function */
