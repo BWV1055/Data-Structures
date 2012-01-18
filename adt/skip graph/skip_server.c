@@ -35,23 +35,59 @@ int read_from_client(int fd)
 }
 
 void act_on_opcode() {
-	opcode = buffer[0];
+	char opcode;
+	int node_id;
+	int key_len;
+	char *key = malloc(100*sizeof(char));
+
+	int buf_pos = 0;
+	buf_read_char(buffer, &buf_pos, &opcode);
 	switch(opcode) {
 	case SearchOp:
-		/* Skip whitespace after opcode */
-		i = 0;
-		while(*buffer!=" ")
-			startNodeId[i++] = *buffer++;
-		buffer++;
-		i = 0;
-		while(*buffer!=" ")
-			qKey[i++] = *buffer++;
-		buffer++;
-		level = *buffer;
-	
+		fprintf(stderr, "Search op received: ");
+		buf_read_int(buffer, &buf_pos, &node_id);
+		buf_read_int(buffer, &buf_pos, &key_len);
+		buf_read_string_len(buffer, &buf_pos, &key_len, &key);
+		key[key_len]='\0';
+		buf_read_int(buffer, &buf_pos, &level);
+		buf_read_int(buffer, &buf_pos, &source_ip);
+		buf_read_int(buffer, &buf_pos, &source_port);
+		assert(buf_pos==strlen(buffer));
+		fprintf(stderr, "key - %s, level - %d\n", key, level);
+		sg_cursor r_node = get_by_id(node_id);
+		if(r_node==NULL)
+			exit(1);
+		if(!strcmp(r_node->data.key.name, key)) {
+			int buf_pos = 0;
+			/* Found Opcode + key_len + key + value */
+			int msize = 1+4+strlen(key)+4;
+			char *mback = (char*)malloc(msize*sizeof(char));
+			buf_add_char(mback, &buf_pos, FoundOp);
+			buf_add_int(mback, &buf_pos, key_len);
+			buf_add_string_len(mback, &buf_pos, key_len, key);
+			buf_add_int(mback, &buf_pos, value);
+			assert(buf_pos==msize);
+
+			int socket_back_fd = socket_connect(source_ip, source_port);
+			socket_send_message(socket_back_fd, mback);
+			return;
+		}
+		if(strcmp(r_node->data.key.name, key)>0) {
+
+
+
+		} else {
+
+
+
+
+		}
+
+		
+
 
 	case AddOp:
-
+		
 }
 
 int main()

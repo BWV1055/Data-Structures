@@ -32,12 +32,12 @@ int socket_server_accept(int server_socket_fd) {
 	return comm_socket_fd;
 }
 /* Client connects to server and returns the socket_fd for this connection */
-int socket_connect(char *hostname, int port) {
+int socket_connect(int address, int port) {
 	int socket_fd;
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
 
-	server = gethostbyname(hostname);
+	server = gethostbyaddress(address);
 	if(server==NULL)
 		error("Could not locate %s\n", hostname);
 	bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -78,13 +78,7 @@ void socket_read_message(int comm_socket_fd) {
 		printf("Search op received\n");
 }
 
-void socket_send_message(int comm_socket_fd, char op, struct skip_node *cur, key_t qKey) {
-	char *message = malloc(256*sizeof(char));
-	message[0] = op;
-	message[1] = 0x10;
-	message[2] = cur;
-	memcpy(message[3], qKey.name, strlen(qKey.name));
+void socket_send_message(int comm_socket_fd, char *message) {
 	if(write(comm_socket_fd, message, strlen(message))<0)
 		error("ERROR writing to socket");
-	
 }
