@@ -1,7 +1,8 @@
-This is a description of the functioning of the skip graph.
+The skip graph is divided into skip nodes, each skip node corresponding to one piece of data (ie: one file). There can be multiple skip nodes on the same machine (as many as files added to the skip graph), each with a unique ID.
+There are two special skip nodes, a start and a nil node. In order for these two nodes to exist, there has to be a server which keeps there two nodes (and also possibly its own skip nodes).
 
-First of all, the skip graph is divided into skip nodes, each skip node corresponding to one piece of data (ie: one file). There can be multiple skip nodes on the same machine (as many as files added to the skip graph), each with a unique ID (given by hashing the filename).
-There are two special skip nodes, a start and a nil node. These nodes are presumed to exist by any skip node. In order for these two nodes to exist, there has to be a server which keeps there two nodes (and also possibly its own skip nodes).
+Connections between machines are made when there is some data to be sent (they are not permanent, this would cause 3*log(n) open connections per node).
+
 
 These are the operations on a skip graph:
 	Add - adds a new file (specified by the filename) to the skip graph
@@ -16,5 +17,8 @@ Remove: OpCode(RemoveOp) StartNodeId qKey
 View  : OpCode(ViewOp)
 Exit  : OpCode(ExitOp)
 
-Two ideas borrowed from https://github.com/kumagi/skip-graph/
-All the nodes on one machine have only one port for communication (not 3*log(n) ports per node), and sending messages back to the originating node is done by appending the message originator ip and port to every subsequent message passed around.
+There are a few other opcodes which are used for communication between machines, but a user cannot access them directly.
+
+Two ideas borrowed from https://github.com/kumagi/skip-graph :
+Sending messages back to the originating node is done by appending the message originator ip and port to every subsequent message passed around.
+Connections are kept open only for as long as needed (ie: they get shut down when the message is sent).
