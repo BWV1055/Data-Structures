@@ -1,5 +1,7 @@
 /*
  * B-tree implementation with classes
+ *
+ * TODO: test
  */
 
 #include <string>
@@ -26,10 +28,12 @@ public:
 
 /* A node contains up to 2*K indices and 2*K+1 pointers */
 class B-node {
-	enum { K=5; }
+	enum { L, R, K=5; }
 	vector<Index> indices;
 	vector<B-node*> children;
 	B-node *parent;
+	/* Index in parent->children */
+	int pos;
 public:
 	B-node(Index first) : indices[0](first) {}
 	B-node(Index first, B-node *child, B-node *parent) : indices[0](first), children[0](child), parent(parent) {}
@@ -72,18 +76,34 @@ public:
 	void removeIndex(Index i) {
 		int size = this->indices.size();
 		int pos = findPos(i, 0, size);
-		/* Leaf node */
-		if(this->children.size()==0) {
-			this->indices.remove(pos);
-			if(this->indices.size()<K) {
-				this->merge(this->parent->first());
+		vector<Index>::iterator startInd = this->indices.start();
+		this->indices.erase(startInd+pos);
+		if(this->indices.size()==K-1) {
+			B-node* left = this->getLeft();
+			if(left->indices.size()==K) {
+				this->merge(left, L);
+				return;
 			}
+			B-node* right = this->getRight();
+			if(right->indices.size()==K) {
+				this->merge(right, R);
+				return;
+			}
+			if(right->indices.size()>left->indices.size()) {
+				this->merge(right, R);
+				this->split();
+			} else {
+				this->merge(left, L);
+				this->split();
+			}
+		}
 	}
 	int getValueForKey(string key) {
 		vector<Index>::iterator it;
 		for(it=this->indices.begin();it<=this->indices.end();it++)
 			if(key==this->indices[it].getKey())
 				return this->indices[it].getValue();
+		return -1;
 	}
 private:
 	int findPos(Index i, int start, int end) {
@@ -97,7 +117,45 @@ private:
 		else
 			return half;
 	}
-
+	/* Returns the node on the left, if there is one */
+	B-node* getLeft(B-node* cur) {
+		if(!cur->parent || !cur->pos)
+			return NULL;
+		return cur->parent->children[cur->pos-1];
+	}
+	B-node* getRight(B-node* cur) {
+		if(!cur->parent || cur->pos==2*K+1)
+			return NULL;
+		return cur->parent->children[cur->pos+1];
+	}
+	/* Merge left or right sibling into current node */
+	void merge(B-node* sibling, bool LR) {
+		if(LR==L) {
+			this->children.insert(this->children.begin(), sibling->children.begin(), sibling->children.end()+1);	
+			this->indices.insert(this->indices.begin(), sibling->indices.begin(), sibling->indices.end()+1);
+		} else {
+			this->children.insert(this->children.end()+1, sibling->children.begin(), sibling->children.end()+1);	
+			this->indices.insert(this->indices.end()+1, sibling->indices.begin(), sibling->indices.end()+1);
+		}
+		vector<B-node*>::iterator pChdStart = sibling->parent->children.begin(); 
+		sibling->parent->children.remove(pChdStart + sibling->pos);
+		delete(sibling);	
+	}
+	/* Split into itself and newSibling 
+	 * newSibling will be positioned LR */
+	void split(bool LR) {
+		if(LR==L) {
+			B-node* sibling = new B-node(this->indices, 0, this->indices.size()/2, this->children, 0, this->children.size()/2);
+			this->children.erase(this->children.begin(), this->children.begin()+this->children.size()/2+1);
+			this->indices.erase(this->indices.begin(), this->indices.begin()+this->indices.size()/2+1);
+			this->parent->children.insert(this->pos, sibling);
+		} else {
+			B-node* sibling = new B-node(this->indices, this->indices.size()/2+1, this->indices.size(), this->children, this->children.size()/2+1, this->children.size());
+			this->children.erase(this->children.begin()+this->children.size()/2+1, this->children.end());
+			this->indices.erase(this->indices.begin()+this->indices.size()/2+1, this->children.end());
+			this->parent->children.insert(this->pos+1, sibling);
+		}
+	}
 };
 
 class B-tree {
@@ -132,3 +190,20 @@ private:
 	}
 };
 
+class B-nodeTest {
+	static void main() {
+		char buffer[10];
+		B-tree tree = new B-tree();
+		for(int i=0;i<100;i++) {
+			itoa(i*i*i, buffer, 16);
+			tree.add(new Index(buffer, i));
+		}
+		itoa(57*57*57, buffer, 16);
+		printf("The value associated with %s is %d.\n", buffer, tree.search(buffer)); 
+		Index toRemove = new Index(buffer, 57);
+		tree.remove(toRemove);
+		int result = tree.search(toRemove);
+		if(result==-1)
+			printf("Delete proceeded successfully.\n");
+	}
+};
