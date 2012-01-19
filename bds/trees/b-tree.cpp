@@ -98,13 +98,6 @@ public:
 			}
 		}
 	}
-	int getValueForKey(string key) {
-		vector<Index>::iterator it;
-		for(it=this->indices.begin();it<=this->indices.end();it++)
-			if(key==this->indices[it].getKey())
-				return this->indices[it].getValue();
-		return -1;
-	}
 private:
 	int findPos(Index i, int start, int end) {
 		if(end-start<=0)
@@ -161,32 +154,42 @@ private:
 class B-tree {
 	B-node* root;
 public:
-	B-tree() {}
+	B-tree() {
+		this->root = new B-node();
+	}
 	/* Also updates existing key */
 	void add(Index i) {
-		B-node* pos = findPos(this->root, i);
+		B-node* cur = findNode(this->root, i);
 		pos->addIndex(i);
 	}
 	void remove(Index i) {
-		B-node* pos = findPos(this->root, i);
+		B-node* cur = findNode(this->root, i);
 		pos->removeIndex(i);
 	}
 	int search(string key) {
-		Index n = new Index(key, 0);
-		B-node* pos = findPos(this->root, n);
-		return pos->getValueForKey(key);
+		/* -1 is returned if no key found */
+		Index n = new Index(key, -1);
+		int pos;
+		B-node* cur = findNode(this->root, n);
+		pos = cur->findPos(n, 0, cur->indices.size());
+		return cur->indices[pos].getValue();
 	}
 private:
-	/* Returns the node where Index i should be added 
-	 * Search starts at start */
-	B-node* findPos(B-node* start, Index i) {
-		if(start==NULL)
-			return start->parent;
+	/* Returns the node where Index i belongs to */ 
+	B-node* findNode(B-node* cur, Index i) {
+		/* Root with no elements */
+		if(cur->indices.size()==0)
+			return cur;
+		/* Leaf node */
+		if(cur->children.size()==0)
+			return cur;
 		vector<Index>::iterator it;
-		for(it=start->indices.start();it<=start->indices.end();it++)
-			if(i<start->indices[it])
+		for(it=cur->indices.start();it<cur->indices.end();it++)
+			/* Keys in the B-tree cannot be equal */
+			if(i>cur->indices[it])
 				break;
-		return findPos(start->children[it+1], i);
+		vector<B-node*>::iterator firstChd = cur->children.start();
+		return findPos(cur->children[firstChd+it], i);
 	}
 };
 
