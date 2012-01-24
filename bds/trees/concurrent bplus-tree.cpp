@@ -22,10 +22,22 @@ public:
 	/* for non-leaf only */
 	string highKey;
 	Bp_node* link;
+	bool lock;
+
 public:
-	Bp_node(bool type): leaf(type), parent(NULL) {}
+	Bp_node(bool type): leaf(type), parent(NULL), link(NULL), highKey(0x00) {}
 	/* [startKeys-endKeys) */
-	Bp_node(vector<string> sibKeys, int startKeys, int endKeys, vector<void*> sibChds, int startChds, int endChds) {
+	Bp_node(vector<string> sibKeys, int startKeys, int endKeys, vector<void*> sibChds, int startChds, int endChds, Bp_node* ref) {
+		/* First set link, next parent */
+		if(ref!=NULL) { 
+			this->link = ref->link;
+			ref->link = this;
+			/* parent exists because this is used only on split */
+			vector<void*>::iterator startChds = ref->parent->children.begin();
+			ref->parent->children.insert(startChds+ref->position+1, this);
+			this->parent = ref->parent;
+		} else 
+			this->link = this->parent = NULL;
 		int totalKeys = endKeys - startKeys;
 		int totalChds = endChds - startChds;
 		int i;
@@ -33,7 +45,6 @@ public:
 			this->keys.insert(this->keys.begin()+i, sibKeys[startKeys+i]);
 		for(i=0;i<totalChds;i++)
 			this->children.insert(this->children.begin()+i, sibChds[startChds+i]);
-		this->parent = NULL;
 	}
 	void insert(string qKey, int* value) {
 		if(!this->leaf)
@@ -41,12 +52,16 @@ public:
 		int pos = this->findPos(qKey, 0, this->keys.size());
 		if(pos!=-1)
 			return;
+		if(pos==this->keys.size()-1)
+			this->highKey = qKey;
 		vector<string>::iterator startKeys = this->keys.begin();
 		vector<void*>::iterator startChds = this->children.begin();
 		this->keys.insert(startKeys+pos, qKey);
 		this->children.insert(startChds+pos, value);
 		if(this->keys.size()==2*K+1)
 			this->split();
+		else
+			this->releaseLock();
 	}
 	int* remove(string qKey) {
 		if(!this->leaf)
@@ -54,6 +69,8 @@ public:
 		int pos = this->findPos(qKey, 0, this->keys.size());
 		if(pos==-1)
 			return NULL;
+		if(pos==this->keys.size()-1)
+			this->highKey = this->keys[this->keys.size()-2];
 		vector<string>::iterator startKeys = this->keys.begin();
 		vector<void*>::iterator startChds = this->children.begin();
 		this->keys.erase(startKeys+pos);
@@ -88,20 +105,21 @@ public:
 		/* Extra check if it needs to split */
 		if(this->keys.size()<=2*K)
 			return;
-		Bp_node *newRightSibling = new Bp_node(this->keys, this->keys.size()/2, this->keys.size(), this->children, this->children.size()/2, this->children.size());
+		Bp_node *newRightSibling = new Bp_node(this->keys, this->keys.size()/2, this->keys.size(), this->children, this->children.size()/2, this->children.size(), this);
 		this->children.erase(this->children.begin()+this->children.size()/2, this->children.end());
 		this->keys.erase(this->keys.begin()+this->keys.size()/2, this->keys.end());
+		newRightSibling->highKey = this->highKey;
+		this->highKey = this->keys[this->keys.size()-1];
 		if(!this->parent) {
+			/* No link */
 			Bp_node *newRoot = new Bp_node(false);
 			newRoot->children.insert(newRoot->children.begin(), this);
 			this->position = 0;
 			this->parent = newRoot;
 		}
 		newRightSibling->position = this->position+1;
-		vector<void*>::iterator startChds = this->parent->children.begin();
 		vector<string>::iterator startKeys = this->parent->keys.begin();
 		/* This is where it breaks */
-		this->parent->keys.insert(startKeys+newRightSibling->position, newRightSibling->keys[0]);
 		this->parent->children.insert(startChds+newRightSibling->position+1, newRightSibling);
 		newRightSibling->leaf = this->leaf;
 		newRightSibling->parent = this->parent;
@@ -134,7 +152,7 @@ public:
 			int rsize = right?right->children.size():0;
 			/* First check if it's possible to do only a merge */
 			if(left) {
-				if(lsize==K) {
+				if(lsize==K) {Jean-François Paillard
 					this->merge(left, L);
 					return;
 				}
@@ -167,17 +185,42 @@ public:
 			return NULL;
 		return (Bp_node*)this->parent->children[this->position+1];
 	}
+	bool isLocked() {
+		return this->lock;
+	}
+	void setLock() {
+		this->lock = true;
+	}
+	void releaseLock() {
+		this->lock = false;
+	}
 };
 
 class Bp_tree {
 	Bp_node* root;
 public:
 	Bp_tree() {
+		/* No link */
 		this->root = new Bp_node(true);
 	}
 	void insert(string nKey, int* nValue) {
-		Bp_node* tempNode = this->findNode(nKey);
-		tempNode->insert(nKey, nValue);
+		list<Bp_node*> stack;
+		Bp_node* tempNode = this->root;
+		while(!tempNode->leaf) {
+			if(qKey>tempNode->highKey) {
+				tempNode = tempNode->link;
+				continue;
+			}
+			tempPos = tempNode->findPos(qKey, 0, tempNode->children.size());
+			tempNode = (Bp_node*)tempNode->children[tempPos];
+			stack.push_back(tempNode);
+		}
+		tempNode->setLock();
+		tempNode = tempNode->link;
+		int pos = tempNode->findPos(nKey, 0, tempNode->children.size());
+		if(tempNode->children[pos]==nKey)
+			return;
+		tempNode->insert(mKey, nValue);
 	}
 	int* remove(string nKey) {
 		Bp_node* tempNode = this->findNode(nKey);
@@ -191,13 +234,17 @@ private:
 	Bp_node* findNode(string qKey) {
 		Bp_node* tempNode = this->root;
 		int tempPos;
-		while(!tempNode->leaf) {
+		bool notFound = true;
+		while(notFound) {
+			if(tempNode->leaf && tempNode->highKey>=qKey)
+				notFound = false;
+			if(qKey>tempNode->highKey) {
+				tempNode = tempNode->link;
+				continue;
+			}
 			tempPos = tempNode->findPos(qKey, 0, tempNode->children.size());
 			tempNode = (Bp_node*)tempNode->children[tempPos];
 		}
-		/* Move right */
-		while(tempNode->link && tempNode->highKey<qKey)
-			tempNode = tempNode->link;
 		return tempNode;
 	}
 };
