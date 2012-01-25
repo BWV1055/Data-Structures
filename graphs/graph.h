@@ -18,6 +18,8 @@ public:
 	Vertex getVertex(Vertex qVertex);
 	bool adjacent(Vertex fVertex, Vertex sVertex);
 	vector<Vertex*> neighbors(Vertex qVertex);
+	/* Vertices which are at the origin end, with qVertex at the destination end */ 
+	vector<Vertex*> incoming(Vertex qVertex);
 	int nEdges();
 
 /* The format of the file:
@@ -34,4 +36,5 @@ public:
 	bool isDAG();
 /* Topological sorting of nodes */
 	vector<int> topologicalSort();
+	vector<int> topologicalSortDFS();
 };

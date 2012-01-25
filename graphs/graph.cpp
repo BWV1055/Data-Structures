@@ -30,8 +30,6 @@ vector<int> Graph::topologicalSort() {
 	vector<int> startPos;
 	int i, sPos;
 	vector<Vertex*> neighbors;
-	if(!this->isDAG())
-		return sortedPos;
 	for(i=0;i<this->vertices.size();i++)
 		if(this->vertices[i]->inDegree()==0)
 			startPos.push_back(i);
@@ -58,3 +56,34 @@ vector<int> Graph::topologicalSort() {
 	return sortedPos;
 }
 
+/* Visit nodes in DFS order */
+vector<int> Graph::topologicalSortDFS() {
+	vector<int> sortedPos;
+	vector<int> startPos;
+	int i, sPos;
+	for(i=0;i<this->vertices.size();i++)
+		if(this->vertices[i]->outDegree()==0)
+			startPos.push_back(i);
+	while(!startPos.empty()) {
+		/* Different valid order
+		 * sPos = startPos[startPos.size()/2];
+		 * startPos.erase(sPos); */
+		sPos = startPos.pop_back();
+		visit_topSort(sPos);
+	}	
+	return sortedPos;
+}
+
+void visit_topSort(int sPos) {
+	vector<Vertex*> neighbors;
+	Vertex* neighbor;
+	if(!this->children[sPos]->visited()) {
+		this->children[sPos]->setVisited();
+		neighbors = this->incoming(*(this->children[sPos]));
+		while(neighbors.size()) {
+			neighbor = neighbors.pop_back();
+			visit_topSort(neighbor);
+		}
+		sortedPos.push_back(sPos);
+	}
+}
