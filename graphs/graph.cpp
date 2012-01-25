@@ -23,7 +23,38 @@ using namespace std;
 #include "vertex.h"
 #include "graph.h"
 
-
-
-
+/* Vertices are stored in the order they are inserted
+ * Return their positions topologically sorted */
+vector<int> Graph::topologicalSort() {
+	vector<int> sortedPos;
+	vector<int> startPos;
+	int i, sPos;
+	vector<Vertex*> neighbors;
+	if(!this->isDAG())
+		return sortedPos;
+	for(i=0;i<this->vertices.size();i++)
+		if(this->vertices[i]->inDegree()==0)
+			startPos.push_back(i);
+	while(!startPos.empty()) {
+		/* Different valid order
+		 * sPos = startPos[startPos.size()/2];
+		 * startPos.erase(sPos); */
+		sPos = startPos.pop_back();
+		sortedPos.push_back(sPos);
+		neighbors = this->neighbors(*(this->children[sPos]));
+		while(!neighbors.empty()) {
+			Vertex* neighbor = neighbors.pop_back();
+			this->vertices[sPos]->remove(*neighbor);
+			if(neighbor->inDegree()==0) {
+				vector<Vertex*>::iterator neighborPos = std::find(this->children.begin(), this->children.end(), neighbor);
+				sortedPos.push_back(neighborPos);
+			}
+		}
+	}
+	if(this->nEdges()) {
+		cout << "The graph is not DAG" << endl;
+		sortedPos.clear();
+	}
+	return sortedPos;
+}
 

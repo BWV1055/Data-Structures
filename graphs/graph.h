@@ -8,18 +8,17 @@
 
 class Graph
 {
-	int size;
-	Vertex vertices[10];
-	Edge edges[100];
+	vector<Vertex*> vertices;
+	vector<Edge*> edges;
 
 public:
-	Graph(int nSize, Vertex* nVertices) : size(nSize), vertices(nVertices) {}
+	Graph() {}
 	void addVertex(Vertex nVertex);
 	Vertex removeVertex(Vertex qVertex);
 	Vertex getVertex(Vertex qVertex);
 	bool adjacent(Vertex fVertex, Vertex sVertex);
-	Vertex[] neighbors(Vertex qVertex);
-
+	vector<Vertex*> neighbors(Vertex qVertex);
+	int nEdges();
 
 /* The format of the file:
  * 	First line contains the number of nodes
@@ -31,4 +30,8 @@ public:
  * */
 	void readFile(FILE *f);
 	void writeFile(FILE *f);
+/* Check if graph is DAG (Directed Acyclic Graph) */
+	bool isDAG();
+/* Topological sorting of nodes */
+	vector<int> topologicalSort();
 };
