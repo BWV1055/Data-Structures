@@ -23,13 +23,14 @@ using namespace std;
 #include "vertex.h"
 #include "graph.h"
 
-/* Vertices are stored in the order they are inserted
- * Return their positions topologically sorted */
+
+
+
 vector<int> Graph::topologicalSort() {
 	vector<int> sortedPos;
 	vector<int> startPos;
 	int i, sPos;
-	vector<Vertex*> neighbors;
+	list<Vertex*> neighbors;
 	for(i=0;i<this->vertices.size();i++)
 		if(this->vertices[i]->inDegree()==0)
 			startPos.push_back(i);
@@ -39,10 +40,10 @@ vector<int> Graph::topologicalSort() {
 		 * startPos.erase(sPos); */
 		sPos = startPos.pop_back();
 		sortedPos.push_back(sPos);
-		neighbors = this->neighbors(*(this->children[sPos]));
+		neighbors = this->neighbors(this->children[sPos]);
 		while(!neighbors.empty()) {
 			Vertex* neighbor = neighbors.pop_back();
-			this->vertices[sPos]->remove(*neighbor);
+			this->vertices[sPos]->removeEdge(neighbor);
 			if(neighbor->inDegree()==0) {
 				vector<Vertex*>::iterator neighborPos = std::find(this->children.begin(), this->children.end(), neighbor);
 				sortedPos.push_back(neighborPos);
@@ -75,7 +76,7 @@ vector<int> Graph::topologicalSortDFS() {
 }
 
 void visit_topSort(int sPos) {
-	vector<Vertex*> neighbors;
+	list<Vertex*> neighbors;
 	Vertex* neighbor;
 	if(!this->children[sPos]->visited()) {
 		this->children[sPos]->setVisited();
@@ -87,3 +88,50 @@ void visit_topSort(int sPos) {
 		sortedPos.push_back(sPos);
 	}
 }
+
+queue<Vertex*> Graph::DFS(Vertex* start) {
+	queue<Vertex*> dfsVertices;
+	this->DFS_r(start, dfsVertices);
+	this->resetVisited();
+	return dfsVertices;
+}
+
+void Graph::DFS_r(Vertex* start, queue<Vertex*> dfsVertices) {
+	start->setVisited();
+	dfsVertices.push(start);
+	list<Vertex*> neighbors = this->neighbors(start); 
+	while(!neighbors.empty()) {
+		Vertex* next = neighbors.pop_back();
+		if(!next->visited())
+			this->DFS_r(next, dfsVertices);
+	}
+}
+
+queue<Vertex*> Graph::BFS(Vertex* start) {
+	queue<Vertex*> bfsVertices;
+	start->setVisited();
+	bfsVertices.push(start);
+	this->BFS_r(start, bfsVertices);
+	this->resetVisited();
+	return bfsVertices;
+}
+
+void Graph::BFS_r(Vertex* start, queue<Vertex*> bfsVertices) {
+	Vertex* next;
+	list<Vertex*> neighbors = this->neighbors(start); 
+	list<Vertex*>::iterator itNeighbors = neighbors.begin();
+	for( ;itNeighbors!=neighbors.end;itNeighbors++) {
+		next = *itNeighbors;
+		if(!next->visited()) {
+			next->setVisited();
+			bfsVertices.push(next);
+		}
+	}
+	itNeighbors = neighbors.start();
+	for( ;itNeighbors!=neighbors.end;itNeighbors++) {
+		next = *itNeighbors;
+		this->BFS_r(next, bfsVertices);
+	}
+}
+
+

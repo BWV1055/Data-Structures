@@ -5,6 +5,7 @@
  */
 
 #include "adjacency_list.h"
+#include <queue>
 
 class Graph
 {
@@ -14,12 +15,13 @@ class Graph
 public:
 	Graph() {}
 	void addVertex(Vertex nVertex);
-	Vertex removeVertex(Vertex qVertex);
-	Vertex getVertex(Vertex qVertex);
+	Vertex removeVertex(Vertex* qVertex);
+	/* pos is the position in the list of vertices */
+	Vertex* getVertex(int pos);
 	bool adjacent(Vertex fVertex, Vertex sVertex);
-	vector<Vertex*> neighbors(Vertex qVertex);
+	list<Vertex*> neighbors(Vertex* qVertex);
 	/* Vertices which are at the origin end, with qVertex at the destination end */ 
-	vector<Vertex*> incoming(Vertex qVertex);
+	list<Vertex*> incoming(Vertex* qVertex);
 	int nEdges();
 
 /* The format of the file:
@@ -32,9 +34,16 @@ public:
  * */
 	void readFile(FILE *f);
 	void writeFile(FILE *f);
-/* Check if graph is DAG (Directed Acyclic Graph) */
-	bool isDAG();
-/* Topological sorting of nodes */
+
+	queue<Vertex*> DFS(Vertex* start);
+	queue<Vertex*> BFS(Vertex* start);
+/* Returns the positions in Graph::vertices reordered
+ * Using topological sort ordering */
 	vector<int> topologicalSort();
+/* Another valid topological sort order of the vertices */
 	vector<int> topologicalSortDFS();
+/* Check if graph is Directed Acyclic Graph */
+	bool isDAG();
+
+	void resetVisited();
 };
