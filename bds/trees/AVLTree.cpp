@@ -15,17 +15,17 @@ class AVL: public BST {
 			if(abs(cur->bFactor())>1) {
 				if(cur->bFactor()==-2) {
 					if(cur->right->bFactor()==-1)
-						rotate(cur, L);
+						rotate_left(cur);
 					else {
-						rotate(cur->right, R);
-						rotate(cur, L);
+						rotate_right(cur->right);
+						rotate_left(cur);
 					}
 				} else {
 					if(cur->left->bFactor()==1)
-						rotate(cur, R);
+						rotate_right(cur);
 					else {
-						rotate(cur->left, L);
-						rotate(cur, R);
+						rotate_left(cur->left);
+						rotate_right(cur);
 					}
 				}
 			}
@@ -69,17 +69,17 @@ class AVL: public BST {
 			if(abs(child->bFactor())>1) {
 				if(child->bFactor()==-2) {
 					if(child->right->bFactor()==-1)
-						rotate(child, L);
+						rotate_left(child);
 					else {
-						rotate(child->right, R);
-						rotate(child, L);
+						rotate_right(child->right);
+						rotate_left(child);
 					}
 				} else {
 					if(child->left->bFactor()==1)
-						rotate(child, R);
+						rotate_right(child);
 					else {
-						rotate(child->left, L);
-						rotate(child, R);
+						rotate_left(child->left);
+						rotate_right(child);
 					}
 				}
 			} else
