@@ -2,25 +2,33 @@
  *	Weight balanced trees
  *		Original tree used irrational parameters, in Adams tree a bug was found
  *		See http://hagi.is.s.u-tokyo.ac.jp/~yh/bst.pdf
- *	This implementation uses delta = %delta%, alpha = %alpha% and omega=%omega%
+ *	This is the original version of the algorithm
+ *	This implementation uses delta = 3, alpha = 1 and gamma=2
  */
 
 #include "BinarySearchTree.cpp"
 
 class WBT_Node: public BSTNode {
-	enum {ALPHA=2, OMEGA=1, DELTA=4};
+	enum {ALPHA=1, GAMMA=2, DELTA=3};
 	int size;
 public: 
 	WBT_Node(): size(1), left(NULL), right(NULL) {} 
 	WBT_Node(int size, WBT_Node* left, WBT_Node* right): size(left->size+right->size+1), left(left), right(right) {}
+	/* Adams tree
+	 * WBT_Node(int size, WBT_Node* left, WBT_Node* right): size(left->size+right->size), left(left), right(right) {}
+	 */
 	int getSize() { return this->size; }
 	int setSize(int size) { this->size = size; }
 	bool check_balance() {
-		if(this->left->getSize()<this->right->getSize()*OMEGA+DELTA) {
+		/* Adams tree 
+		 * if(this->left->getSize()+this->right->getSize()<=1)
+		 *	 return true;
+		 */
+		if(this->left->getSize()<this->right->getSize()*GAMMA+DELTA) {
 			select_rotation(L);
 			return false;
 		}
-		if(this->right->getSize()<this->left->getSize()*OMEGA+DELTA) {
+		if(this->right->getSize()<this->left->getSize()*GAMMA+DELTA) {
 			select_rotation(R);
 			return false;
 		}
