@@ -1,19 +1,26 @@
 /*
  *	Splay tree
+ *
+ *	Randomized, with up to 25% speed access improvement if keys have a known p.d.
+ *	See: http://www2.informatik.hu-berlin.de/~albers/papers/ipl02.pdf
+ *		
  */
 
 class SplayTree: public BST {
-
+	enum { P=0.7 };
 public:
 	void insert(K key, V value) {
 		BSTNode* added = this->base_add(key, value);
-		this->splay(added);
+		/* Remove for deterministic splaying */
+		if((rand()%10)<10*P)
+			this->splay(added);
 	}
 	void remove(K key) {
 		BSTNode<K,V>* pos = this->findPos(key, this->root);
 		BSTNode<K,V>* parent = pos->parent;
 		this->base_remove(key);
-		if(parent)
+		/* Remove second condition for det splaying */
+		if(parent && rand()%10<10*P)
 			this->splay(parent);
 	}
 	void splay(BSTNode* x) {
