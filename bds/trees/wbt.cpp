@@ -15,11 +15,20 @@ public:
 	WBT_Node(int size, WBT_Node* left, WBT_Node* right): size(left->size+right->size+1), left(left), right(right) {}
 	int getSize() { return this->size; }
 	int setSize(int size) { this->size = size; }
-	void check_balance() {
-		if(this->left->getSize()<this->right->getSize()*OMEGA+DELTA)
+	bool check_balance() {
+		if(this->left->getSize()<this->right->getSize()*OMEGA+DELTA) {
 			select_rotation(L);
-		else if(this->right->getSize()<this->left->getSize()*OMEGA+DELTA)
+			return false;
+		}
+		if(this->right->getSize()<this->left->getSize()*OMEGA+DELTA) {
 			select_rotation(R);
+			return false;
+		}
+		if(!this->right->check_balance())
+			return false;
+		if(!this->left->check_balance())
+			return false;
+		return true;
 	}
 	void select_rotation(bool LR) {
 		WBT_Node* subtree;
