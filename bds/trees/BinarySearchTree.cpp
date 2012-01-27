@@ -95,3 +95,33 @@ private:
 		free(pos);
 	}
 };
+
+void rotate_left(BSTNode<K,V>* root) {
+	BSTNode<K,V>* temp = root->right;
+	root->right->parent = root->parent;
+	if(root->parent) {
+		if(root->parent->left==root)
+			root->parent->left = root->right;
+		else 
+			root->parent->right = root->right;
+	}
+	root->right = root->right->left;
+	root->right->parent = root;
+	root->parent = temp;
+	temp->left = root;
+}
+
+void rotate_right(BSTNode<K,V>* root) {
+	BSTNode<K,V>* temp = root->left;
+	root->left->parent = root->parent;
+	if(root->parent) {
+		if(root->parent->left==root)
+			root->parent->left = root->left;
+		else 
+			root->parent->right = root->left;
+	}
+	root->left = root->left->right;
+	root->left->parent = root;
+	root->parent = temp;
+	temp->right = root;
+}
