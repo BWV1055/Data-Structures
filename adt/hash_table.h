@@ -1,6 +1,9 @@
 /*
  * Hash table operations
  * 	This hash table is an implementation of the Map ADT
+ *	(The distinction between a Map and a Dictionary is that the keys
+ *		in a Map form a Set - are unique, while in a Dictionary form
+ *		a Collection - the same key can appear multiple times)
  * 	There are additional methods to:
  * 		add a large collection of objects to the hash table
  * 		clear the hash table
@@ -49,7 +52,7 @@ void ht_put(hash_tbl_t *h, key_t nKey, int nValue);
 void ht_multiple_put(hash_tbl_t *h, struct generic_data *entrySet, size_t *len);
 /* Remove and return the value with key qKey; if there is no such key, return NULL */
 int ht_remove(hash_tbl_t *h, key_t qKey);
-/* Returns in keySet a collection of all keys stored in the hash table */
+/* Returns in keySet a set of all keys stored in the hash table */
 void ht_keySet(hash_tbl_t *h, key_t *keySet, size_t *len);
 /* Returns in values a collection of all values stored in the hash table */
 void ht_values(hash_tbl_t *h, int *values, size_t *len);

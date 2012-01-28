@@ -27,8 +27,8 @@ struct bt_node {
 };
 
 struct bt {
-	uint size;
-	uint height;
+	size_t size;
+	uint_t height;
 	bt_cursor root;
 };
 
