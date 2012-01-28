@@ -1,2 +1,4 @@
+Data structures and algorithms.
 
-Data structures and some algorithms.
+TODO:
+Implement flags, labels (flags with names), iterators and cascading walk functions.

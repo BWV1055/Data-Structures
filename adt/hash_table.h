@@ -25,9 +25,8 @@ typedef struct {
 } hash_func_t;
 
 typedef struct {
-	struct bucket_array buckets;
-	ll_cur_t current;
-	hash_func_t func;
+	struct bucket_array *buckets;
+	hash_func_t *func;
 } hash_tbl_t;
 
 /* Returns a newly initialized hash table using FNV-1 and MAD */
@@ -39,7 +38,7 @@ void ht_delete(hash_tbl_t *h);
 /* Returns the number of elements stored in the hash table */
 size_t ht_size(hash_tbl_t *h);
 /* Returns 0 if hash table has elements, 1 otherwise */
-uchar ht_isEmpty(hash_tbl_t *h);
+char ht_isEmpty(hash_tbl_t *h);
 /* Removes all entries in the hash table */
 void ht_clear(hash_tbl_t *h);
 /* Returns the value stored for key qKey */
@@ -59,10 +58,6 @@ void ht_values(hash_tbl_t *h, int *values, size_t *len);
 /* Returns in entrySet a collection containing all the key-value entries in the hash table 
  * Entries can be sorted using a comp_func_t function */
 void ht_entrySet(hash_tbl_t *h, struct generic_data *entrySet, size_t *len);
-/* Returns the key for the minimum value in key, comparing values using min_cmp */
-key_t ht_min_value(hash_table *h, comp_func_t min_cmp);
-/* Returns the key for the maximum value in key, comparing values using max_cmp */
-key_t ht_max_value(hash_table *h, comp_func_t max_cmp);
 
 /* Below are provided some hash functions and compression methods */
 
@@ -70,13 +65,14 @@ key_t ht_max_value(hash_table *h, comp_func_t max_cmp);
  * This could change if there is a garbage collector (if possible, rehash after
  * 		calling the gc)
  * Also, for similar strings, this function will generate different results */
-ulong hash_code_mem_loc(key_t key) {
-	return (ulong)key.name;
+uint32_t hash_code_mem_loc(key_t *key) {
+	return (uint32_t)key;
 }
 /* FNV-1 32 bit hashing algorithm
  * Very fast */
-ulong hash_code_fnv1(key_t key) {
-	ulong fnv_prime = 16777619, offset_basis = 2166136261, hash_code = offset_basis;
+uint64_t hash_code_fnv1(key_t key) {
+	uint32_t fnv_prime = 16777619, offset_basis = 2166136261;
+   	uint64_t hash_code = offset_basis;
 	int i; 
 	for(i=0;i<key.len;i++) {
 		hash_code *= fnv_prime;
@@ -85,10 +81,9 @@ ulong hash_code_fnv1(key_t key) {
 	return hash_code;
 }
 /* MAD compression function */
-uint compress_mad(ulong code, size_t ba_size) {
-	ulong p = 2305843009213693951;
-	long long temp = code;
-	return ((2*temp+1)%p)%ba_size;
+uint32_t compress_mad(uint64_t code, uint32_t ba_size) {
+	uint64_t p = 2305843009213693951;
+	return ((101*code+41)%p)%ba_size;
 }
 
 #endif
