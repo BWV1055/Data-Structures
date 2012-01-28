@@ -1,10 +1,13 @@
 /*
- *	The Graph class
+ *	Graph implemented using an adjacency list
  *
  *
  */
 
 #include "adjacency_list.h"
+/*
+ * #include "adjacency_matrix.h"
+ */
 #include <queue>
 
 class Graph

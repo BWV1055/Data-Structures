@@ -4,15 +4,20 @@
  *
  */
 
+#ifndef _ADJACENCY_MATRIX_H_
+#define _ADJACENCY_MATRIX_H_
+
+#include <iostream>
+#include <string>
+
+using namespace std;
+
 class AdjacencyMatrix
 {
-	border
-	style
-	size
-	values
-	flags
-	x
-
+	int size;
+	Edge* references[size][size];
+	AdjacencyMatrix(int size): size(size) {}
+	void addRef(int i, int j, Edge* ref);
 }
 
 class Data
@@ -20,18 +25,18 @@ class Data
 	std::string strVal;
 	int intVal;
 };
-
+/* Same methods as class Vertex from adjacency_list.h */
 class Vertex
 {
 	Data data;
 	int index;
 	char flags;
 };
-/* Resizable array of vertices */
-class VertexArray
-{
-	
 
 class Edge
 {
 
+
+};
+
+#endif
