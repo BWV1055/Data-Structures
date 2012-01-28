@@ -12,6 +12,7 @@
 
 class Graph
 {
+	enum { PLUS_INF_DISTANCE=1000 };
 	vector<Vertex*> vertices;
 	vector<Edge*> edges;
 
@@ -21,12 +22,14 @@ public:
 	Vertex removeVertex(Vertex* qVertex);
 	/* pos is the position in the list of vertices */
 	Vertex* getVertex(int pos);
-	bool adjacent(Vertex fVertex, Vertex sVertex);
+	int findPos(Vertex* qVertex);
+	bool adjacent(Vertex* fVertex, Vertex* sVertex);
+	int getCost(Vertex* fVertex, Vertex* sVertex);
 	list<Vertex*> neighbors(Vertex* qVertex);
 	/* Vertices which are at the origin end, with qVertex at the destination end */ 
 	list<Vertex*> incoming(Vertex* qVertex);
 	int nEdges();
-
+	int nVertices();
 /* The format of the file:
  * 	First line contains the number of nodes
  * 	The next lines form a matrix with a value v greater than zero 
@@ -47,6 +50,6 @@ public:
 	vector<int> topologicalSortDFS();
 /* Check if graph is Directed Acyclic Graph */
 	bool isDAG();
-
-	void resetVisited();
+/* Search algorithms */
+	int* Dijkstra(Vertex* qVertex);
 };

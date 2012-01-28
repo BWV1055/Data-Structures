@@ -125,4 +125,35 @@ void Graph::BFS_r(Vertex* start, queue<Vertex*> bfsVertices) {
 	}
 }
 
+int* Graph::Dijkstra(Vertex* qVertex) {
+	int i, nVertices = this->nVertices();
+	int* distances = malloc(nVertices*sizeof(int));
+	vector<Vertex*> unvisitedSet;
+	Vertex* cur;
+	list<Vertex*> neighbors;
+	list<Vertex*>::iterator it;
+	for(i=0;i<nVertices;i++) {
+		distances[i] = PLUS_INF_DISTANCE;
+		this->getVertex(i)->resetVisited();
+		unvisitedSet.push_back(this->getVertex(i));
+	}
+	distances[this->findPos(qVertex)] = 0;
+	this->getVertex(this->findPos(qVertex))->setVisited();
+	unvisited.remove(this->findPos(qVertex));
+	while(!unvisited.empty()) {
+		cur = unvisitedSet.pop();
+		neighbors = this->neighbors(cur);
+		curPos = this->findPos(cur);
+		for(it=neighbors->begin();it<neighbors->end();it++)
+			if(!neighbors[it]->visited()) {
+				cost = this->getCost(cur, neighbors[it]);
+				if(distances[curPos]+cost<distances[this->findPos(neighbors[it])])
+					distances[this->findPos(neighbors[it])] = distances[curPos]+cost;
+			}
+		this->getVertex(curPos)->setVisited();
+	}
+	/* free after using */
+	return distances;
+}
+	
 
