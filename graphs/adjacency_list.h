@@ -52,6 +52,8 @@ public:
 	int getCost();
 	void setCost(int nCost);
 	EdgePair* getEndPoints();
+	Edge* getStart();
+	Edge* getEnd();
 	/* Returns true if qVertex is either end of the edge */
 	bool isPart(const Vertex* qVertex);
 };

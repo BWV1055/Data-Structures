@@ -87,7 +87,12 @@ public:
  * If (u,v) is in G, (v,u) will be in G transposed */
 	void transpose();
 	DSForest* stronglyConnComponents();
+/* O(E*lg(V)) */
+	vector<Edge*> Kruskal();
+	vector<Edge*> Prim();
+
 /* Search algorithms */
+/* nVertices values */
 	int* Dijkstra(Vertex* qVertex);
 	int* DijkstraFib(Vertex* qVertex);
 

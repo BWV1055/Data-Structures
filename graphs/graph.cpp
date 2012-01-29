@@ -165,7 +165,30 @@ void Graph::BFS_visit(Vertex* start, queue<Vertex*> bfsVertices) {
 	}
 }
 
-/* nVertices values */
+bool compareWeights(Edge* lhs, Edge* rhs) { return lhs->getCost() - rhs->getCost(); }
+
+vector<Edge*> Graph::Kruskal() {
+	Vertex *u, *v;
+	DSForest<Vertex>* disjointSets = new DSForest();
+	vector<Edge*> mst;
+	vector<Vertex*>::iterator vertIt;
+	vector<Edge*>::iterator edgeIt;
+	for(vertIt=this->vertices.start(); vertIt<this->vertices.end(); vertIt++) {
+		mst->makeDSN(vertIt);
+	sort(this->edges.start(), this->edges.end(), compareWeights);
+	for(edgeIt=this->edges.start(); edgeIt<this->edges.end(); edgeIt++) {
+		u = edgeIt->getStart();
+		v = edgeIt->getEnd();
+		if(disjointSets->findSet(u)!=disjointSets->findSet(v)) {
+			disjointSets->unionDSN(disjointSets->findSet(u), disjointSets->findSet(v));
+			mst.insert(mst.end(), it);
+		}
+	}
+	return mst;
+}
+
+vector<Edge*> Graph::Prim() {	
+
 int* Graph::Dijkstra(Vertex* qVertex) {
 	int i, nVertices = this->nVertices();
 	int* distances = malloc(nVertices*sizeof(int));
@@ -230,7 +253,7 @@ int* Graph::DijkstraFib(Vertex* qVertex) {
 	return distances;
 }
 		
-DSForest* stronglyConnComponents() {
+DSForest* Graph::stronglyConnComponents() {
 	DSForest<Vertex>* newForest = new DSForest();
 	vector<Vertex*>::iterator it;
 	for(it = this->vertices.begin(); it < this->vertices.end(); it++)
