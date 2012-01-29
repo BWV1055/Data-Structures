@@ -128,6 +128,7 @@ public:
 	Edge* addEdge(Vertex vertex, int cost);
 	void removeEdge(Vertex vertex);
 	int getCost(Vertex vertex);
+	Edge* getEdge(Vertex* neighbor);
 	void setCost(Vertex vertex, int cost);
 	bool checkAdjacency(Vertex vertex);
 };
