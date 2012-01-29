@@ -9,6 +9,50 @@
  * #include "adjacency_matrix.h"
  */
 #include <queue>
+#include <algorithm>
+
+template<class VertexT>
+class DSN {
+	VertexT* vertex;
+	DSN* parent;
+	int rank;
+public:
+	DSN(VertexT* vertex) : vertex(vertex), parent(this), rank(0) {}
+	int getRank() { return this->rank; }
+};
+
+template<class VertexT>
+class DSForest {
+	vector<DSN<VertexT>*> roots;
+public:
+	DSForest() : roots(NULL) {}
+	void makeDSN(VertexT* vertex) {
+		DSN<VertexT>* newDSN = new DSN(vertex);
+		this->roots.insert(this->roots.end(), newDSN);
+	}
+	void unionDSN(DSN<VertexT>* x, DSN<VertexT>* y) {
+		this->link(this->findSet(x), this->findSet(y));
+	}
+	void link(DSN<VertexT>* x, DSN<VertexT>* y) {
+		if(x->rank>y->rank) {
+			y->parent = x;
+			this->roots.erase(find(this->roots.begin(), this->roots.end(), y));
+		} else {
+			x->parent = y;
+			this->roots.erase(find(this->roots.begin(), this->roots.end(), x));
+			if(x->rank==y->rank)
+				y->rank = y->rank+1;
+		}
+	}
+	DSN<VertexT>* findSet(Vertex* qVertex) {
+		if(qVertex->parent!=qVertex)
+			qVertex->parent = this->findSet(qVertex->parent);
+		return qVertex->parent;
+	}
+	bool sameSet(Vertex* fVertex, Vertex* sVertex) {
+		return findSet(fVertex) == findSet(sVertex);
+	}
+};
 
 class Graph
 {
@@ -30,10 +74,24 @@ public:
 	list<Vertex*> incoming(Vertex* qVertex);
 	int nEdges();
 	int nVertices();
-/* Check if graph is Directed Acyclic Graph */
+	queue<Vertex*> BFS(Vertex* start);
+	queue<Vertex*> DFS(Vertex* start);
 	bool isDAG();
-	bool isDirected();
-	bool positiveEdges();
+/* Returns the positions in Graph::vertices reordered
+ * Using topological sort ordering */
+	vector<int> topologicalSort();
+/* Another valid topological sort order of the vertices */
+	vector<int> topologicalSortDFS();
+
+/* G transposed has the same vertices and edges
+ * If (u,v) is in G, (v,u) will be in G transposed */
+	void transpose();
+	DSForest* stronglyConnComponents();
+/* Search algorithms */
+	int* Dijkstra(Vertex* qVertex);
+	int* DijkstraFib(Vertex* qVertex);
+
+
 /* The format of the file:
  * 	First line contains the number of nodes
  * 	The next lines form a matrix with a value v greater than zero 
@@ -45,14 +103,4 @@ public:
 	void readFile(FILE *f);
 	void writeFile(FILE *f);
 
-	queue<Vertex*> DFS(Vertex* start);
-	queue<Vertex*> BFS(Vertex* start);
-/* Returns the positions in Graph::vertices reordered
- * Using topological sort ordering */
-	vector<int> topologicalSort();
-/* Another valid topological sort order of the vertices */
-	vector<int> topologicalSortDFS();
-/* Search algorithms */
-	int* Dijkstra(Vertex* qVertex);
-	int* DijkstraFib(Vertex* qVertex);
 };

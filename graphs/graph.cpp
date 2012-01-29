@@ -79,35 +79,75 @@ void visit_topSort(int sPos) {
 		sortedPos.push_back(sPos);
 	}
 }
-
-queue<Vertex*> Graph::DFS(Vertex* start) {
+/* Both dfsVertices and d/f/pre fields in each vertex can be used
+ * O(V+E) 
+ * Order=true, select neighbor with max f first; else, no predefined order */
+queue<Vertex*> Graph::DFS(Vertex* start, bool order=false) {
+	int time = 0;
+	vector<Vertex*>::iterator it;
+	for(it = this->vertices.begin(); it < this->vertices.end(); it++) {
+		it->color = WHITE;
+		it->pre = NULL;
+	}
 	queue<Vertex*> dfsVertices;
-	this->DFS_r(start, dfsVertices);
-	this->resetVisited();
+	this->DFS_visit(start, dfsVertices, time, order);
 	return dfsVertices;
 }
 
-void Graph::DFS_r(Vertex* start, queue<Vertex*> dfsVertices) {
-	start->setVisited();
-	dfsVertices.push(start);
-	list<Vertex*> neighbors = this->neighbors(start); 
-	while(!neighbors.empty()) {
-		Vertex* next = neighbors.pop_back();
-		if(!next->visited())
-			this->DFS_r(next, dfsVertices);
+class compareByF {
+	bool reverse;
+public:
+	compareByF(bool rev): reverse(rev) {}
+	bool operator() (const Vertex* lhs, const Vertex* rhs) {
+		if(reverse) return lhs->f>rhs->f;
+		else return lhs->f<rhs->f;
 	}
+};
+
+typedef priority_queue<Vertex*, <vector>Vertex*, compareByF> pq_fTime;
+
+void Graph::DFS_visit(Vertex* start, queue<Vertex*> dfsVertices, int timestamp, bool order) {
+	Edge* startNext;
+	timestamp = timestamp+1;
+	start->d = timestamp;
+	start->color = GRAY;
+	dfsVertices.push(start);
+	list<Vertex*> neighbors = this->neighbors(start);
+	/*
+	list<Vertex*>::iterator it; 
+	pq_fTime neighborso;
+	for(it=neighbors.start();it<neighbors.end();it++)
+		neighborso.add(it);
+	*/
+	while(!neighbors.empty()) {
+		/* Changing the neighbor visit order results in another valid DFS 
+		 * (for example, by selecting the minimum from the list each time) */
+		Vertex* next = neighbors.pop();
+		startNext = start->getEdge(next);
+		if(next->color==WHITE) {
+			next->pre = start;
+			startNext->type = EDGE_TREE;
+			this->DFS_visit(next, dfsVertices, timestamp);
+		} else if(next->color==GRAY) {
+			startNext->type = EDGE_BACK;
+			/* Got here, it means the graph is not DAG */
+		}
+	}
+	start->color = BLACK;
+	timestamp = timestamp+1;
+	start->f = time;
 }
 
 queue<Vertex*> Graph::BFS(Vertex* start) {
 	queue<Vertex*> bfsVertices;
 	start->setVisited();
 	bfsVertices.push(start);
-	this->BFS_r(start, bfsVertices);
+	this->BFS_visit(start, bfsVertices);
 	this->resetVisited();
 	return bfsVertices;
 }
 
-void Graph::BFS_r(Vertex* start, queue<Vertex*> bfsVertices) {
+void Graph::BFS_visit(Vertex* start, queue<Vertex*> bfsVertices) {
 	Vertex* next;
 	list<Vertex*> neighbors = this->neighbors(start); 
 	list<Vertex*>::iterator itNeighbors = neighbors.begin();
@@ -121,7 +161,7 @@ void Graph::BFS_r(Vertex* start, queue<Vertex*> bfsVertices) {
 	itNeighbors = neighbors.start();
 	for( ;itNeighbors!=neighbors.end;itNeighbors++) {
 		next = *itNeighbors;
-		this->BFS_r(next, bfsVertices);
+		this->BFS_visit(next, bfsVertices);
 	}
 }
 
@@ -190,4 +230,21 @@ int* Graph::DijkstraFib(Vertex* qVertex) {
 	return distances;
 }
 		
-
+DSForest* stronglyConnComponents() {
+	DSForest<Vertex>* newForest = new DSForest();
+	vector<Vertex*>::iterator it;
+	for(it = this->vertices.begin(); it < this->vertices.end(); it++)
+		newForest->makeDSN(it);
+	
+	this->DFS();
+	this->transpose();
+	bool maxHeap = true;
+	this->DFS(maxHeap);
+	
+	for(it = this->vertices.begin(); it < this->vertices.end(); it++) {
+		if()
+			newForest->unionDSN(newForest->findSet(it), %%);
+	}
+	return newForest;
+}
+	
