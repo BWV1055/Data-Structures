@@ -30,6 +30,10 @@ public:
 	list<Vertex*> incoming(Vertex* qVertex);
 	int nEdges();
 	int nVertices();
+/* Check if graph is Directed Acyclic Graph */
+	bool isDAG();
+	bool isDirected();
+	bool positiveEdges();
 /* The format of the file:
  * 	First line contains the number of nodes
  * 	The next lines form a matrix with a value v greater than zero 
@@ -48,8 +52,7 @@ public:
 	vector<int> topologicalSort();
 /* Another valid topological sort order of the vertices */
 	vector<int> topologicalSortDFS();
-/* Check if graph is Directed Acyclic Graph */
-	bool isDAG();
 /* Search algorithms */
 	int* Dijkstra(Vertex* qVertex);
+	int* DijkstraFib(Vertex* qVertex);
 };

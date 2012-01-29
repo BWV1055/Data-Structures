@@ -125,6 +125,7 @@ void Graph::BFS_r(Vertex* start, queue<Vertex*> bfsVertices) {
 	}
 }
 
+/* nVertices values */
 int* Graph::Dijkstra(Vertex* qVertex) {
 	int i, nVertices = this->nVertices();
 	int* distances = malloc(nVertices*sizeof(int));
@@ -155,5 +156,38 @@ int* Graph::Dijkstra(Vertex* qVertex) {
 	/* free after using */
 	return distances;
 }
-	
+
+int* Graph::DijkstraFib(Vertex* qVertex) {
+	int i, nVertices = this->nVertices();
+	int* distances = malloc(nVertices*sizeof(int));
+	FibHeap<Vertex*> unvisitedSet = new FibHeap();
+	Vertex* cur;
+	list<Vertex*> neighbors;
+	list<Vertex*>::iterator it;
+	for(i=0;i<nVertices;i++) {
+		distances[i] = PLUS_INF_DISTANCE;
+		this->getVertex(i)->resetVisited();
+		unvisitedSet.insert(distances[i], this->getVertex(i));
+	}
+	unvisitedSet.decreaseKey(PLUS_INF_DISTANCE, qVertex);
+	this->getVertex(this->findPos(qVertex))->setVisited();
+	unvisitedSet.removeMin();
+	while(!unvisitedSet.empty()) {
+		cur = unvisitedSet->findMin();
+		neighbors = this->neighbors(cur);
+		curPos = this->findPos(cur);
+		for(it=neighbors->begin();it<neighbors->end();it++)
+			if(!neighbors[it]->visited()) {
+				/* Always happens */
+				cost = this->getCost(cur, neighbors[it]);
+				if(distances[curPos]+cost<distances[this->findPos(neighbors[it])])
+					/* Always happens */
+					/* distances[this->findPos(neighbors[it])] = distances[curPos]+cost; */
+					unvisitedSet->decreaseKey(distances[this->findPos(neighbors[it])] - distances[curPos]-cost, neighbors[it]);
+			}
+		this->getVertex(curPos)->setVisited();
+	}
+	return distances;
+}
+		
 
