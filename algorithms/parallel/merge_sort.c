@@ -12,6 +12,8 @@
  *
  */
 
+#include <math.h>
+
 void merge_sort(int* v, int p, int r) {
 	if(r<=p)
 		return;
@@ -47,6 +49,10 @@ cilk void p_merge_sort(int* A, int p, int r, int* B, int s) {
 	int n = r-p+1;
 	if(n==1) {
 		B[s] = A[p];
+		return;
+	}
+	if(n<=4) {
+		quick_sort(A, p, r, B, s);
 		return;
 	}
 	int q = floor((p+r)/2);
