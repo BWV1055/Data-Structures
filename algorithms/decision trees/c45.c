@@ -1,10 +1,13 @@
 /*
  *	C4.5 algorithm, the successor of ID3, for building decision trees
+ *	Original tree, optimal pruning, the pruning produced by this algorithm, any other pruning
+ *
  */
 
 #include <math.h>
 
 struct dec_node {
+	char visited;
 	char leaf;
 	int cur_marks;
 	int total_marks;
@@ -73,6 +76,23 @@ float l_bl_er(struct dec_node* n) {
 			er++;
 	er = er/n->m_v;
 	return er;
+}
+
+float penalty(struct dec_node* n) {
+	float alpha;
+	float delta, m, c;
+	alpha = log2(paths(dt, n->l_v)) + log2(trees(dt, n->s_v)) + log2(m/delta);
+	alpha = c*sqrt(alpha/n->m_v);
+	return alpha;
+}
+/* The number of paths less or equal in length to l */
+double paths(struct dec_tree* dt, int l) {
+
+
+}
+/* The number of binary trees with at most s internal nodes */
+double trees(struct dec_tree* dt, int s) {
+
 }
 
 /* max = 0, b_leaf = NULL */
@@ -286,7 +306,31 @@ struct dec_tree* first_pass(char* training_data[], int n_attrib) {
 }
 /* Kearns et Mansour [98] */
 void second_pass(struct dec_tree* dt, int* a[]) {
-	
+	struct dec_node* cur = dt->root;
+	if(cur==NULL)
+		return;
+	while(cur->children)
+		cur = cur->children;
+	cur->cur_marks = 1;
+	cur->total_marks = 1;
+	cur->parent->cur_marks++;
+	cur = cur->parent;
+}
+
+void make_choice(struct dec_node* cur) {
+	cur->visited;
+	if(cur->leaf) {
+		cur->cur_marks = 1;
+		cur->total_marks = 1;
+		cur->parent->cur_marks++;
+		return;
+	}
+	for(i=0; i<cur->sample_n; i++)
+		if(!cur->children[i]->visited)
+			make_choice(cur->children[i]);
+	if(cur->parent)
+		make_choice(cur->parent);
+}
 
 char* training_data[] = 
 {
