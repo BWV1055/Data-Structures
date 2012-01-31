@@ -5,6 +5,9 @@
 #include <math.h>
 
 struct dec_node {
+	char leaf;
+	/* Filled only for leaf */
+	int c_n;
 	/* Outlook */
 	int att_n;
 	/* Each attribute has values: Sunny, Overcast, Rain */
@@ -12,8 +15,8 @@ struct dec_node {
 	int* sample_v;
 	/* Sunny: 5, Overcast: 4, Rain: 5 */
 	int* sample_f;
-	int chd_n;
 	struct dec_node** chd;
+	struct dec_node* parent;
 };
 
 struct dec_tree {
@@ -71,10 +74,26 @@ float gain(int* a[], int attrib, int n_entries, int cc) {
 	return g;
 }
 
+void dt_statistics(int* a[], int attrib, int* p_sample_n, int** p_sample_v, int** p_sample_f, int n_entries) {
+	int i;
+	int* values = calloc(n_entries*sizeof(int));
+	*p_sample_n = 0;
+	for(i=0;i<n_entries;i++)
+		values[a[i][attrib]]++;
+	for(i=0;i<n_entries;i++)
+		if(values[i]) {
+			*p_sample_n++;
+			*p_sample_v[p_sample_n] = i;
+			*p_sample_f[p_sample_n] = values[i];
+		}
+	free(values);
+}
+
 /* n_attrib includes the classification column, last */
 struct dec_tree* c45(char* training_data[], int n_attrib) {
-	char *c;
+	char *c, fully_class = 0, max_g, level_done = 0;
 	int col = 0, line = 0, cur_total = 0;
+	int avail_attribs = n_attrib-1;
 
 	c = training_data[0];
 	while(strcmp(c, NULL)) {
@@ -97,18 +116,18 @@ struct dec_tree* c45(char* training_data[], int n_attrib) {
 				else return NULL;
 			}
 			case 2: {
-				if(strcmp(c, "HIGH")==0) a[i][j] = 0;
-				else if(strcmp(c, "NORMAL")==0) a[i][j] = 1;
+				if(strcmp(c, "HIGH")==0) a[line][col] = 0;
+				else if(strcmp(c, "NORMAL")==0) a[line][col] = 1;
 				else return NULL;
 			}
 			case 3: {
-				if(strcmp(c, "WEAK")==0) a[i][j] = 0;
-				else if(strcmp(c, "STRONG")==0) a[i][j] = 1;
+				if(strcmp(c, "WEAK")==0) a[line][col] = 0;
+				else if(strcmp(c, "STRONG")==0) a[line][col] = 1;
 				else return NULL;
 			}
 			case 4: {
-				if(strcmp(c, "NO")==0) a[i][j] = 0;
-				else if(strcmp(c, "YES")==0) a[i][j] = 1;
+				if(strcmp(c, "NO")==0) a[line][col] = 0;
+				else if(strcmp(c, "YES")==0) a[line][col] = 1;
 				else return NULL;
 			}
 			default:
@@ -117,10 +136,74 @@ struct dec_tree* c45(char* training_data[], int n_attrib) {
 		c = training_data[cur_total];
 	}
 
-	struct dec_tree* d_tree = malloc(sizeof(*d_tree));
+	struct dec_tree* d_tree = calloc(sizeof(*d_tree));
+	d_tree->root = calloc(sizeof(struct dec_node));
+	struct dec_node* cur_n = d_tree->root;
 
-	while()
+	int* attribs = calloc((n_attribs-1)*sizeof(int));
+	for(i=0;i<n_attribs-1;i++)
+		attribs[i] = i; /* TODO: put the value for the column number */
 
+	max_g = 0;
+	for(j=0;j<avail_attribs;j++) {
+		g = gain(a, attribs[j], n_entries, cc);
+		if(g>max_g) {
+			max_pos = j;
+			max_g = g;
+		}
+	}
+	new_n->att_n = attribs[j];
+	for(k=j;k<avail_attribs;k++)
+		attribs[k] = attribs[k+1];
+	avail_attribs--;
+	
+	cur_n->leaf = 0;
+	dt_statistics(a, cur_n->att_n, &cur_n->sample_n, &cur_n->sample_v, &cur_n->sample_f, n_entries);
+	cur_n->children = malloc(sizeof(*new_n->children));
+	cur_n->parent = NULL;
+	fully_class+=cur_n->children;
+
+	while(!fully_class && avail_attribs) {
+		for(i=0;i<cur_n->sample_n;i++) {
+			struct dec_node* new_n = calloc(sizeof(*new_n));
+			if(entropy_c(a, cur_n->att_n, cur_n->sample_v[i], n_entries, cc)==0) {
+				/* Leaf node */
+				new_n->leaf = 1;
+				while(a[j++][cur_n->att_n]!=cur_n->sample_v[i]);
+				new_n->c_n = a[j][cc];
+				cur_n->children[i] = new_n;
+				fully_class--;
+				continue;
+			}
+			max_g = 0;
+			for(j=0;j<avail_attribs;j++) {
+				g = gain(a, attribs[j], n_entries, cc);
+				if(g>max_g) {
+					max_pos = j;
+					max_g = g;
+				}
+			}
+
+			new_n->att_n = attribs[j];
+			for(k=j;k<avail_attribs;k++)
+				attribs[k] = attribs[k+1];
+			avail_attribs--;
+			
+			new_n->leaf = 0;
+			dt_statistics(a, new_n->att_n, &new_n->sample_n, &new_n->sample_v, &new_n->sample_f, n_entries);
+			new_n->children = malloc(sizeof(*new_n->children));
+			new_n->parent = cur_n;
+			fully_class+=new_n->children;
+			cur_n->children[i] = new_n;
+		}
+		if(level_done) {
+			while(cur_n->parent)
+				cur_n = cur_n->parent;
+			while(cur_n->children[0])
+				cur_n = cur_n->children[0];
+		} else {
+			cur_n = cur_n->children[0];
+	}
 }
 
 char* training_data[] = 
