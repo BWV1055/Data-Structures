@@ -256,6 +256,16 @@ struct dec_tree* first_pass(char* training_data[], int n_attrib) {
 	struct dec_tree* d_tree = calloc(sizeof(*d_tree));
 	d_tree->root = calloc(sizeof(struct dec_node));
 	struct dec_node* cur_n = d_tree->root;
+	
+	char same = 1;
+	for(i=0;i<col-1;i++)
+		if(all_entries[i]->n_labels[n_attribs-1]!=all_entries[i+1]->n_labels[n_attribs-1])
+			same = 0;
+	if(same) {
+		cur_n->leaf = 1;
+		cur_n->c_n = all_entries[i]->n_labels[n_attribs-1];
+		return d_tree;
+	}
 
 	int* attribs = calloc((n_attribs-1)*sizeof(int));
 	for(i=0;i<n_attribs-1;i++)
