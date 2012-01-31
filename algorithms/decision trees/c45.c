@@ -95,6 +95,16 @@ double trees(struct dec_tree* dt, int s) {
 
 }
 
+void remove_subtree(struct dec_node* n) {
+	if(n->leaf) {
+		free(n);
+		return;
+	}
+	for(int i=0;i<n->samples_n;i++)
+		remove_subtree(n->children[i]);
+	free(n);
+}
+
 /* max = 0, b_leaf = NULL */
 struct dec_node* best_leaf(struct dec_node* n, int max, struct dec_node* b_leaf) {
 	if(n->sample_n>max) {
@@ -309,27 +319,40 @@ void second_pass(struct dec_tree* dt, int* a[]) {
 	struct dec_node* cur = dt->root;
 	if(cur==NULL)
 		return;
-	while(cur->children)
-		cur = cur->children;
-	cur->cur_marks = 1;
-	cur->total_marks = 1;
-	cur->parent->cur_marks++;
-	cur = cur->parent;
+	make_choice(cur);
 }
 
 void make_choice(struct dec_node* cur) {
+	struct dec_node* bl;
 	cur->visited;
 	if(cur->leaf) {
 		cur->cur_marks = 1;
-		cur->total_marks = 1;
-		cur->parent->cur_marks++;
 		return;
 	}
 	for(i=0; i<cur->sample_n; i++)
-		if(!cur->children[i]->visited)
+		if(!cur->children[i]->visited) {
 			make_choice(cur->children[i]);
+			cur->cur_marks += cur->children[i]->cur_marks;
+		}
+	if(check_marks(cur)) {
+		if(l_er(cur)+penalty(cur)>l_bl_er(cur)) {
+			if(!cur->parent)
+				return;
+			bl = best_leaf(cur, 0, NULL);
+			j = 0;
+			while(cur->parent->children[j++]!=cur) {};
+			cur->parent->children[j] = bl;
+			j = 0;
+			while(bl->parent->children[j++]!=bl) {};
+			bl->parent->children[j] = NULL;
+			bl->parent = cur->parent;
+			remove_subtree(cur);
+		}
+	}
+	/* If start on a different node than the root
 	if(cur->parent)
 		make_choice(cur->parent);
+	*/
 }
 
 char* training_data[] = 
