@@ -6,6 +6,11 @@
 
 struct dec_node {
 	char leaf;
+	int cur_marks;
+	int total_marks;
+	int s_v;
+	int m_v; /* = S_v(all_entries, this, whatever, n_entries) */
+	char l_v;
 	/* Filled only for leaf */
 	int c_n;
 	/* Outlook */
@@ -13,6 +18,9 @@ struct dec_node {
 	/* Each attribute has values: Sunny, Overcast, Rain */
 	int sample_n;
 	int* sample_v;
+	/* Number of positive/negative examples for each attribute value 
+	 * pn_example[0..sample_n-1][0..number of classifiers] */
+	int** pn_examples;
 	/* Sunny: 5, Overcast: 4, Rain: 5 */
 	int* sample_f;
 	struct dec_node** chd;
@@ -30,6 +38,76 @@ struct dec_tree {
 	int* classif;
 };
 
+struct entry {
+	int n_fields;
+	char** labels;
+	int** numeric_labels;
+};
+/* Return the entries which reach node n */
+int S_v(struct entry* all_entries, struct dec_node* n, struct entry* valid, int n_entries) {
+	int n_valid = 0;
+	for(int i=0;i<n_entries;i++)
+		if(reach(n, all_entries[i], n_entries))
+			valid[n_valid++] = &all_entries[i];
+	return n_valid;
+}
+
+float l_er(struct dec_node* n) {
+	float er = 0;
+	/* all entries reaching n are in valid */
+	int n_reach = S_v(all_entries, n, valid, n_entries);
+	for(i=0;i<n_reach;i++)
+		/* Classifier misclassifies entry */
+		if(go(n, valid[i])!=valid[i]->numeric_labels[last])
+			er++;
+	er = er/n->m_v;
+	return er;
+}
+
+float l_bl_er(struct dec_node* n) {
+	float er = 0;
+	struct dec_node* bl = best_leaf(n, 0, NULL);
+	int n_reach = S_v(all_entries, n, valid, n_entries);
+	for(i=0;i<n_reach;i++)
+		if(bl->c_n!=valid[i]->numeric_labels[last])
+			er++;
+	er = er/n->m_v;
+	return er;
+}
+
+/* max = 0, b_leaf = NULL */
+struct dec_node* best_leaf(struct dec_node* n, int max, struct dec_node* b_leaf) {
+	if(n->sample_n>max) {
+		max = n->sample_n;
+		b_leaf = n;
+	}
+	for(int i=0;i<n->sample_n;i++)
+		if(!n->chd[i]->leaf)
+			return best_leaf(n->chd[i], max, b_leaf);
+	return b_leaf;
+}
+	
+/* This allows the bottom-up approach of the second pass */
+char check_marks(struct dec_node* n) {
+	return n->total_marks==n->cur_marks;
+}
+/* Test if an entry reaches start_node */
+char reach(struct dec_node* start_node, struct entry* q_entry, int n_entries) {
+	if(!start_node->parent)
+		return 1;
+	struct dec_node* parent = start_node->parent;
+	for(i=0;i<parent->samples_n;i++)
+		if(parent->children[i]==start_node)
+			break;
+	
+   	for(j=0;j<n_entries-1;j++)	
+	   	if(q_entry[j] == i)
+			return reach(parent, q_entry, n_entries);
+	return 0;
+}
+/* Target function: f(x) = value of the classifier on the line of x 
+ * Localized error: er(start_node) = prob(T(x)!=f(x)), if reach(start_node,x) 
+ * Observed localized error: er(start_node), if start_node is replaced by the best leaf */
 float entropy_c(int* a[], int attrib, int attrib_v, int n_entries, int cc) {
 	int i, classif, total = 0, a_v_c;
 	int* c_f = calloc(n_entries*sizeof(int));
@@ -90,7 +168,7 @@ void dt_statistics(int* a[], int attrib, int* p_sample_n, int** p_sample_v, int*
 }
 
 /* n_attrib includes the classification column, last */
-struct dec_tree* c45(char* training_data[], int n_attrib) {
+struct dec_tree* first_pass(char* training_data[], int n_attrib) {
 	char *c, fully_class = 0, max_g, level_done = 0;
 	int col = 0, line = 0, cur_total = 0;
 	int avail_attribs = n_attrib-1;
@@ -178,6 +256,7 @@ struct dec_tree* c45(char* training_data[], int n_attrib) {
 			max_g = 0;
 			for(j=0;j<avail_attribs;j++) {
 				g = gain(a, attribs[j], n_entries, cc);
+				/* greedy */
 				if(g>max_g) {
 					max_pos = j;
 					max_g = g;
@@ -205,6 +284,9 @@ struct dec_tree* c45(char* training_data[], int n_attrib) {
 			cur_n = cur_n->children[0];
 	}
 }
+/* Kearns et Mansour [98] */
+void second_pass(struct dec_tree* dt, int* a[]) {
+	
 
 char* training_data[] = 
 {
