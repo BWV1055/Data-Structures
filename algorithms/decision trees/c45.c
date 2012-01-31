@@ -197,6 +197,16 @@ void dt_statistics(int* a[], int attrib, int* p_sample_n, int** p_sample_v, int*
 		}
 	free(values);
 }
+/* Determine if attrib produces a non trivial partition */
+char ntp(struct entry** all_entries, int attrib, int n_entries) {
+
+
+}
+/* Put in results the entries which have attrib_v on column attrib */
+int select(struct entry** all_entries, int attrib, int attrib_v, struct entry** results, int n_entries) {
+
+
+}
 
 #define MAX_ENTRIES	100
 /* n_attrib includes the classification column, last */
