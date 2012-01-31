@@ -44,14 +44,14 @@ struct dec_tree {
 struct entry {
 	int n_fields;
 	char** labels;
-	int** numeric_labels;
+	int* n_labels;
 };
 /* Return the entries which reach node n */
 int S_v(struct entry* all_entries, struct dec_node* n, struct entry* valid, int n_entries) {
 	int n_valid = 0;
 	for(int i=0;i<n_entries;i++)
 		if(reach(n, all_entries[i], n_entries))
-			valid[n_valid++] = &all_entries[i];
+			valid[n_valid++] = all_entries[i];
 	return n_valid;
 }
 
@@ -78,7 +78,7 @@ float l_bl_er(struct dec_node* n) {
 	return er;
 }
 
-float penalty(struct dec_node* n) {
+float penalty(struct dec_tree* dt, struct dec_node* n) {
 	float alpha;
 	float delta, m, c;
 	alpha = log2(paths(dt, n->l_v)) + log2(trees(dt, n->s_v)) + log2(m/delta);
@@ -121,18 +121,19 @@ struct dec_node* best_leaf(struct dec_node* n, int max, struct dec_node* b_leaf)
 char check_marks(struct dec_node* n) {
 	return n->total_marks==n->cur_marks;
 }
-/* Test if an entry reaches start_node */
-char reach(struct dec_node* start_node, struct entry* q_entry, int n_entries) {
-	if(!start_node->parent)
+/* Test if an entry reaches n */
+char reach(struct dec_node* n, struct entry* q, int n_entries) {
+	int i;
+	struct dec_node* parent = n->parent;
+	if(!parent)
 		return 1;
-	struct dec_node* parent = start_node->parent;
-	for(i=0;i<parent->samples_n;i++)
-		if(parent->children[i]==start_node)
-			break;
+	i = 0;
+	while(parent->children[i++]!=n) {}
 	
-   	for(j=0;j<n_entries-1;j++)	
-	   	if(q_entry[j] == i)
-			return reach(parent, q_entry, n_entries);
+   	for(j=0;j<n_entries-1;j++)
+		/* Sunny */	
+	   	if(q->n_labels[j] == parent->sample_v[i])
+			return reach(parent, q, n_entries);
 	return 0;
 }
 /* Target function: f(x) = value of the classifier on the line of x 
@@ -197,51 +198,59 @@ void dt_statistics(int* a[], int attrib, int* p_sample_n, int** p_sample_v, int*
 	free(values);
 }
 
+#define MAX_ENTRIES	100
 /* n_attrib includes the classification column, last */
 struct dec_tree* first_pass(char* training_data[], int n_attrib) {
 	char *c, fully_class = 0, max_g, level_done = 0;
 	int col = 0, line = 0, cur_total = 0;
 	int avail_attribs = n_attrib-1;
-
+	
+	struct entry** all_entries = malloc(MAX_ENTRIES*sizeof(*all_entries));
+	all_entries[0] = malloc(sizeof(*all_entries[0]));
 	c = training_data[0];
+
 	while(strcmp(c, NULL)) {
 		cur_total++;
 		if(cur_total%n_attrib==0){
 			line++;
 			col=0;
+			all_entries[line] = malloc(sizeof(*all_entries[line]));
+			all_entries[line]->n_fields = n_attrib;
 		}
+		all_entries[line]->labels[col] = c;
 		switch col {
 			case 0: {
-				if(strcmp(c, "SUNNY")==0) a[line][col] = 0;
-				else if(strcmp(c, "OVERCAST")==0) a[line][col] = 1;
-				else if(strcmp(c, "RAIN")==0) a[line][col] = 2;
+				if(strcmp(c, "SUNNY")==0) all_entries[line]->n_labels[col] = 0;
+				else if(strcmp(c, "OVERCAST")==0) all_entries[line]->n_labels[col] = 1;
+				else if(strcmp(c, "RAIN")==0) all_entries[line]->n_labels[col] = 2;
 				else return NULL;
 			}
 			case 1: {
-				if(strcmp(c, "HOT")==0) a[line][col] = 0;
-				else if(strcmp(c, "MILD")==0) a[line][col] = 1;
-				else if(strcmp(c, "COLD")==0) a[line][col] = 2;
+				if(strcmp(c, "HOT")==0) all_entries[line]->n_labels[col] = 0;
+				else if(strcmp(c, "MILD")==0) all_entries[line]->n_labels[col] = 1;
+				else if(strcmp(c, "COLD")==0) all_entries[line]->n_labels[col] = 2;
 				else return NULL;
 			}
 			case 2: {
-				if(strcmp(c, "HIGH")==0) a[line][col] = 0;
-				else if(strcmp(c, "NORMAL")==0) a[line][col] = 1;
+				if(strcmp(c, "HIGH")==0) all_entries[line]->n_labels[col] = 0;
+				else if(strcmp(c, "NORMAL")==0) all_entries[line]->n_labels[col] = 1;
 				else return NULL;
 			}
 			case 3: {
-				if(strcmp(c, "WEAK")==0) a[line][col] = 0;
-				else if(strcmp(c, "STRONG")==0) a[line][col] = 1;
+				if(strcmp(c, "WEAK")==0) all_entries[line]->n_labels[col] = 0;
+				else if(strcmp(c, "STRONG")==0) all_entries[line]->n_labels[col] = 1;
 				else return NULL;
 			}
 			case 4: {
-				if(strcmp(c, "NO")==0) a[line][col] = 0;
-				else if(strcmp(c, "YES")==0) a[line][col] = 1;
+				if(strcmp(c, "NO")==0) all_entries[line]->n_labels[col] = 0;
+				else if(strcmp(c, "YES")==0) all_entries[line]->n_labels[col] = 1;
 				else return NULL;
 			}
 			default:
 				break;
 		}
 		c = training_data[cur_total];
+		col++;
 	}
 
 	struct dec_tree* d_tree = calloc(sizeof(*d_tree));
