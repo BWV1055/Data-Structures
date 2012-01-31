@@ -6,6 +6,7 @@ struct dec_node {
 	char attr_n;
 	int n_children;
 	struct dec_node** children;
+	
 };
 
 struct dec_tree {
@@ -49,7 +50,7 @@ float entropy(int* a[], int attrib, int n_entries) {
 	return s;
 }
 
-float gain(int* a[], int attrib, int n_attrib, int n_entries) {
+float gain(int* a[], int attrib, int parent_attrib, int value_parent, int n_attrib, int n_entries) {
 	int i, max_val_attrib = 0;
 	float s, entropy, g;
 	int* p = malloc(n_entries*sizeof(int));
@@ -112,19 +113,38 @@ dec_tree* build_id3(char* dataset[], int n_attrib, int n_entries) {
 				break;
 		}
 	}
+
+	int avail_attribs_size = n_attrib;
+	int* avail_attribs = malloc(avail_atrribs_size*sizeof(int));
+	for(i=0;i<avail_attribs_size;i++)
+		avail_attribs[i] = i;
 	
 	struct dec_tree* tree = calloc(sizeof(*tree));
 	struct dec_node* root = calloc(sizeof(*root));
+	struct dec_node* cur_node = root;
 
-	for(i=0;i<n_attrib;i++) {
-		g = gain(a, i, n_attrib, n_entries);
-		if(g>max_gain) {
-			max_gain = g;
-			root->attr_n = i;
-			tree->root = root;
+	while(avail_attribs_size) {
+		for(j=0;j<cur_node->n_children;j++) {
+		
+		for(i=0;i<avail_attribs_size;i++) {
+			max_gain = 0;
+			g = gain(a, avail_attribs[i], parent_attrib, value_parent, n_attrib, n_entries);
+			if(g>max_gain) {
+				max_gain = g;
+				attrib = i;
+			}
 		}
-	}
+		for(i=attrib ;i<avail_attribs_size; i++)
+			avail_attribs[i] = avail_attribs[i+1];
+		avail_attribs_size--;
+		struct dec_node* new_dec = calloc(sizeof(*new_dec));
+		new_dec->attrib_n = attrib;
+		new_dec->children = calloc(sizeof(*new_dec->children));
+		cur_node->children[j] = new_dec;
 
+		}
+		cur_node = cur_node->children;
+	}
 	
 
 	return tree;
