@@ -64,5 +64,3 @@ void bst_node_remove(bt_cursor cur) {
 		free(cur);
 	}
 }
-
-#endif
